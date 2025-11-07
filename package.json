@@ -1,0 +1,25 @@
+{
+  "name": "devwebii-projeto-crud-login",
+  "version": "1.0.0",
+  "description": "Projeto para as aulas de Desenvolvimento Web II",
+  "homepage": "https://github.com/Mateus-SR/DevWebII-Projeto-CRUD-Login#readme",
+  "bugs": {
+    "url": "https://github.com/Mateus-SR/DevWebII-Projeto-CRUD-Login/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Mateus-SR/DevWebII-Projeto-CRUD-Login.git"
+  },
+  "license": "ISC",
+  "author": "Mateus-SR",
+  "type": "commonjs",
+  "main": "index.js",
+  "scripts": {
+    "test": "teste"
+  },
+  "dependencies": {
+    "express": "^5.1.0",
+    "mongoose": "^8.19.3",
+    "passport-jwt": "^4.0.1"
+  }
+}
