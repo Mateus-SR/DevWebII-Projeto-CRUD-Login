@@ -12,17 +12,12 @@
     --animate-bump: bump 0.2s ease-out;
 
     @keyframes bump {
-        0% { 
+        0%, 100% { 
             transform: scale(1);
-            background-color: #FFFFFF55;
         }
 
         50% {
             transform: scale(1.05);
-        }
-
-        100% {
-            transform: scale(1);
         }
     }
 }
