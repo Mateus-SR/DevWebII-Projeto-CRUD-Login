@@ -263,15 +263,11 @@
   inherits: false;
 }
 @keyframes bump {
-  0% {
+  0%, 100% {
     transform: scale(1);
-    background-color: #FFFFFF55;
   }
   50% {
     transform: scale(1.05);
-  }
-  100% {
-    transform: scale(1);
   }
 }
 @layer properties {
