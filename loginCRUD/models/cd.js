@@ -2,17 +2,17 @@ const mongoose = require('mongoose');
 const Schema = mongoose.Schema;
 
 const cdSchema = new Schema ({
-    nome: { type: String, required: true },
+    titulo: { type: String, required: true },
     tipo: { type: String, required: true },
     genero: { type: String },
     faixas: [{ 
         titulo: String,
-        duracao: Number
+        duracao: String
      }],
     duracaoTotal: { type: Number },
     ano: { type: Number },
 
-     faixasTotal: { type: Number, default: 1 },
+     faixasTotal: { type: Number, default: 0 },
 
     autor: { type: Schema.Types.ObjectId, ref: 'Autor', required: true }
 });

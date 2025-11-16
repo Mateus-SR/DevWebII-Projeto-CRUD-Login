@@ -20,4 +20,15 @@
             transform: scale(1.05);
         }
     }
+
+    --animate-FadeInOut: FadeInOut 5s ease-in-out infinite;
+    @keyframes FadeInOut {
+        0%, 100%{
+            opacity: 0%;
+        }
+
+        50% {
+            opacity: 100%;
+        }
+    }
 }

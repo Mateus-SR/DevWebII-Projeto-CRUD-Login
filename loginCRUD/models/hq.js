@@ -13,7 +13,7 @@ const hqSchema = new Schema ({
         emEstoque: { type: Boolean, required: true } 
      }],
 
-    volumeTotal: { type: Number, default: 1 },
+    volumeTotal: { type: Number, default: 0 },
 
     autores: [{ type: Schema.Types.ObjectId, ref: 'Autor', required: true }]
 });
