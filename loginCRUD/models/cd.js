@@ -2,8 +2,8 @@ const mongoose = require('mongoose');
 const Schema = mongoose.Schema;
 
 const cdSchema = new Schema ({
-    nome: { type: String, require: true },
-    tipo: { type: String, require: true },
+    nome: { type: String, required: true },
+    tipo: { type: String, required: true },
     genero: { type: String },
     faixas: [{ 
         titulo: String,
