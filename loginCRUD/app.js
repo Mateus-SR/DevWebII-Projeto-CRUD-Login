@@ -3,9 +3,15 @@ var express = require('express');
 var path = require('path');
 var cookieParser = require('cookie-parser');
 var logger = require('morgan');
+var cors = require('cors');
 
 var indexRouter = require('./routes/index');
 var usersRouter = require('./routes/users');
+var authRouter = require('./routes/auth');
+var autoresRouter = require('./routes/autores');
+var livrosRouter = require('./routes/livros');
+var cdsRouter = require('./routes/cds');
+var dvdsRouter = require('./routes/dvds');
 
 var mongoose = require('mongoose');
 mongoose.connect(process.env.MONGODB)
@@ -14,10 +20,15 @@ mongoose.connect(process.env.MONGODB)
 
 var app = express();
 
+const passport = require('passport');
+require('./config/passport');
+app.use(passport.initialize());
+
 // view engine setup
 app.set('views', path.join(__dirname, 'views'));
 app.set('view engine', 'pug');
 
+app.use(cors());
 app.use(logger('dev'));
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
@@ -26,6 +37,11 @@ app.use(express.static(path.join(__dirname, 'public')));
 
 app.use('/', indexRouter);
 app.use('/users', usersRouter);
+app.use('/auth', authRouter);
+app.use('/autores', autoresRouter);
+app.use('/livros', livrosRouter);
+app.use('/cds', cdsRouter);
+app.use('/dvds', dvdsRouter);
 
 // catch 404 and forward to error handler
 app.use(function(req, res, next) {
