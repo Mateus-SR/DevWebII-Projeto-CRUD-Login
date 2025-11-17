@@ -18,7 +18,7 @@ router.post('/', authenticate, async (req, res) => {
 // 5.2: GET (Listar) - Público
 router.get('/', async (req, res) => {
     try {
-        const hqs = await Hq.find().populate('Autor');
+        const hqs = await Hq.find().populate('autor');
         res.json(hqs);
     } catch (error) {
         res.status(500).json({ error: error.message });

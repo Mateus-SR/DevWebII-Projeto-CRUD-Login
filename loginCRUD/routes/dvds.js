@@ -18,7 +18,7 @@ router.post('/', authenticate, async (req, res) => {
 // 5.2: GET (Listar) - Público
 router.get('/', async (req, res) => {
     try {
-        const dvds = await Dvd.find().populate('Autor');
+        const dvds = await Dvd.find().populate('autor');
         res.json(dvds);
     } catch (error) {
         res.status(500).json({ error: error.message });
