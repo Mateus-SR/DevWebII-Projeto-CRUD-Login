@@ -28,7 +28,12 @@ router.get('/', async (req, res) => {
 // 5.2: GET (Buscar por ID) - Público
 router.get('/:id', async (req, res) => {
     try {
-        const autor = await Autor.findById(req.params.id);
+        const autor = await Autor.findById(req.params.id)
+            .populate('livros')
+            .populate('cds')
+            .populate('dvds')
+            .populate('hqs');
+            
         if (!autor) return res.status(404).json({ message: 'Autor não encontrado' });
         res.json(autor);
     } catch (error) {
