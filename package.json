@@ -20,7 +20,7 @@
   },
   "dependencies": {
     "@tailwindcss/cli": "^4.1.17",
-    "bcryptjs": "^3.0.3",
+    "bcryptjsjs": "^3.0.3",
     "cookie-parser": "~1.4.4",
     "cors": "^2.8.5",
     "debug": "~2.6.9",
