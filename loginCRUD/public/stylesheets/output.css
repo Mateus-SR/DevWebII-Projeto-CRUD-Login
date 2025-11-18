@@ -206,6 +206,9 @@
   .m-5 {
     margin: calc(var(--spacing) * 5);
   }
+  .m-auto {
+    margin: auto;
+  }
   .mx-5 {
     margin-inline: calc(var(--spacing) * 5);
   }
@@ -226,6 +229,9 @@
   }
   .my-52 {
     margin-block: calc(var(--spacing) * 52);
+  }
+  .my-auto {
+    margin-block: auto;
   }
   .ml-5 {
     margin-left: calc(var(--spacing) * 5);
@@ -392,6 +398,9 @@
   .grid-rows-2 {
     grid-template-rows: repeat(2, minmax(0, 1fr));
   }
+  .flex-col {
+    flex-direction: column;
+  }
   .place-content-center {
     place-content: center;
   }
@@ -412,6 +421,9 @@
   }
   .items-center {
     align-items: center;
+  }
+  .items-center-safe {
+    align-items: safe center;
   }
   .items-stretch {
     align-items: stretch;

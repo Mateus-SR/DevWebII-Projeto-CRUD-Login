@@ -9,26 +9,10 @@
     <title>Document</title>
 </head>
 <body class="bg-teal-700">
-    <header class="flex px-2.5 justify-between items-center w-full min-h-12 h-fit bg-teal-200 text-center text-xl font-vend-sans 
-               md:grid md:grid-cols-5 md:place-items-center">
-
-        <div class="col-span-1 p-2.5 h-full flex items-center justify-start hover:bg-teal-400 transition-all duration-300 cursor-pointer hover:animate-bump">
-            <img class="max-h-18 animate-FadeInOut " src="../public/images/SEBOSO simples.png" alt="Seboso - O melhor dentre os piores sebos de São Paulo">
-        </div>
-
-        <div class="col-span-3 md:flex items-center justify-center hidden md:visible">
-            <span class="p-5 h-full hover:bg-teal-400 transition-all duration-300 cursor-pointer hover:animate-bump">Livros</span>
-            <span class="p-5 h-full hover:bg-teal-400 transition-all duration-300 cursor-pointer hover:animate-bump">HQs e Mangás</span>
-            <span class="p-5 h-full hover:bg-teal-400 transition-all duration-300 cursor-pointer hover:animate-bump">CDs</span>
-            <span class="p-5 h-full hover:bg-teal-400 transition-all duration-300 cursor-pointer hover:animate-bump">DVDs</span>
-            <span class="p-5 h-full hover:bg-teal-400 transition-all duration-300 cursor-pointer hover:animate-bump">Autores</span>
-        </div>
-
-        <div class="col-span-1 p-5 h-full flex items-center justify-end hover:bg-teal-400 transition-all duration-300 cursor-pointer hover:animate-bump">
-            <span>Engrenagem Opção</span>
-        </div>
-    </header>
+    {% include header.html %}
 
     {% include divItem.html %}
+
+    {% include scriptsGerais.html %}
 </body>
 </html>

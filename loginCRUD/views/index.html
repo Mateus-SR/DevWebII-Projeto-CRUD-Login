@@ -1,3 +1,5 @@
+---
+---
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -7,34 +9,8 @@
     <title>Document</title>
 </head>
 <body class="bg-teal-700">
-    <header class="flex px-2.5 justify-between items-center w-full min-h-12 h-fit bg-teal-200 text-center text-xl font-vend-sans 
-               md:grid md:grid-cols-5 md:place-items-center">
+    {% include header.html %}
 
-        <div class="col-span-1 p-2.5 h-full flex items-center justify-start hover:bg-teal-400 transition-all duration-300 cursor-pointer hover:animate-bump">
-            <img class="max-h-18 animate-FadeInOut logo" src="../public/images/SEBOSO simples.png" alt="Seboso - O melhor dentre os piores sebos de São Paulo">
-        </div>
-
-        <div class="col-span-3 md:flex items-center justify-center hidden md:visible">
-            <span class="p-5 h-full hover:bg-teal-400 transition-all duration-300 cursor-pointer hover:animate-bump">
-                <a href="livros.html">Livros</a>
-            </span>
-            <span class="p-5 h-full hover:bg-teal-400 transition-all duration-300 cursor-pointer hover:animate-bump">
-                <a href="hqs.html">HQs e Mangás</a>
-            </span>
-            <span class="p-5 h-full hover:bg-teal-400 transition-all duration-300 cursor-pointer hover:animate-bump">
-                <a href="cds.html">CDs</a>
-            </span>
-            <span class="p-5 h-full hover:bg-teal-400 transition-all duration-300 cursor-pointer hover:animate-bump">
-                <a href="dvds.html">DVDs</a>
-            </span>
-            <span class="p-5 h-full hover:bg-teal-400 transition-all duration-300 cursor-pointer hover:animate-bump">
-                <a href="autores.html">Autores</a>
-            </span>
-        </div>
-
-        <div class="col-span-1 p-5 h-full flex items-center justify-end hover:bg-teal-400 transition-all duration-300 cursor-pointer hover:animate-bump">
-            <span>Engrenagem Opção</span>
-        </div>
-    </header>
+    {% include scriptsGerais.html %}
 </body>
 </html>
