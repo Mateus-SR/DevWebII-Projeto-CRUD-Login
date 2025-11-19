@@ -16,7 +16,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function checkAuth() {
-        const token = getToken();
+        const token = getTokenJWT();
         if (token && (window.location.pathname.includes('login.html') || window.location.pathname.includes('cadastro.html'))) {
             window.location.href = 'index.html';
         }

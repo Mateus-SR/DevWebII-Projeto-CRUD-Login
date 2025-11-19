@@ -2,7 +2,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const botaoConta = document?.getElementById('botaoConta'); // Seleciona o span da engrenagem
     
     if (botaoConta) {
-        const token = getToken();
+        const token = getTokenJWT();
 
         if (token) {
             botaoConta.textContent = "Sair";
