@@ -1,4 +1,4 @@
-import { getTokenJWT, setTokenJWT, logout, checkAuth } from './config.js';
+import { getTokenJWT, setTokenJWT, logout } from './config.js';
 
 
 document.addEventListener('DOMContentLoaded', () => {
