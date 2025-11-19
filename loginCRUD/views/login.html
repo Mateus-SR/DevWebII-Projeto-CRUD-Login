@@ -13,13 +13,45 @@
         <div class="relative justify-between px-5 py-2.5">
     
             <div class="flex flex-col border-gray-700 border-3 max-w-full min-h-1/2 my-5 p-5 rounded-lg shadow-2xl">
-                <span class="font-vend-sans text-2xl font-extrabold">
+                <span class="font-vend-sans text-2xl font-extrabold mb-5">
                     Olá, seja bem-vindo(a)!!
                 </span>
-                <br>
-                <span class="font-comfortaa text-lg ml-5">
-                    [Placeholder text]
-                </span>
+                <form id="loginForm">
+      
+
+                    <!-- lugar do email -->
+              
+              
+                    <div class="mb-6">
+                      <forms>
+                        <label for="email" class="block text-sm font-medium text-gray-700 mb-2 font-vend-sans">E-mail</label>
+                        <input type="email" id="email" placeholder="exemplo: erick@neo.com" required
+                          class="font-comfortaa w-full px-4 py-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-teal-400 text-lg">
+                    </div>
+              
+                    <!-- lugar da senha -->
+                    <div class="mb-6">
+                      <label for="password" class="block text-sm font-medium text-gray-700 mb-2 font-vend-sans">Senha</label>
+                      <input type="password" id="password" placeholder="senhaSegura123"
+                        class="font-comfortaa w-full px-4 py-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-teal-400 text-lg">
+                    </div>
+              
+                    <!-- botão login :P -->
+                    <div class="font-comfortaa flex flex-col items-center gap-2.5">
+                        <input type="submit" value="Entrar" id="botaoLogar" href="#" class="w-full max-w-md border-teal-400 border bg-white text-teal-800
+                          p-3.5 rounded-md hover:rounded-2xl hover:bg-teal-800/75 hover:text-white hover:text-xl text-lg font-semibold transition-all duration-600 cursor-pointer">
+              
+                      <a href="cadastro.html"
+                        class="text-md mx-auto underline underline-offset-1 hover:text-teal-500">Não
+                        tenho uma conta
+                      </a>
+              
+              
+              
+              
+              
+                    </div>
+                    </form>
             </div>
         </div>
     </div>
