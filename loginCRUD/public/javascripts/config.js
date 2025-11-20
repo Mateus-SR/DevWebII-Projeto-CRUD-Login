@@ -19,3 +19,18 @@ function checkAuth() {
         window.location.href = 'index.html';
     }
 }
+
+async function criarItem(endpoint, dados) {
+    const token = getTokenJWT();
+    if (!token) return { erro: "Sem token" };
+
+    const response = await fetch(`${VERCEL_URL}${endpoint}`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify(dados)
+    });
+    return await response.json();
+}

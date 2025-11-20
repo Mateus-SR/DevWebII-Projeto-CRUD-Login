@@ -4,10 +4,43 @@ const Cd = require('../models/Cd');
 const passport = require('passport');
 const authenticate = passport.authenticate('jwt', { session: false });
 
+const multer = require('multer');
+const { uploadStream } = require('../config/cloudinary');
+
+const storage = multer.memoryStorage();
+const upload = multer({ storage: storage });
+
 // 5.3: POST (Criar) - Protegido
-router.post('/', authenticate, async (req, res) => {
+router.post('/', authenticate, upload.single('imagem'), async (req, res) => {
     try {
-        const cd = new Cd(req.body);
+        // 1. "Espalha" todos os campos de texto que vieram (nome, tipo, ano, etc.)
+        // Isso evita ter que digitar um por um!
+        const dados = { ...req.body };
+
+        // 2. Lógica da Imagem (Só adiciona se existir arquivo)
+        if (req.file) {
+            const result = await uploadStream(req.file.buffer);
+            dados.urlFoto = result.secure_url;
+        }
+
+        // 3. Converter campos "Array" que vieram como JSON String
+        // O front-end manda arrays como string "[...]" via FormData.
+        // O Mongoose precisa de Arrays reais. Vamos converter automaticamente:
+        const camposArray = ['genero', 'autores', 'volumes', 'faixas']; // Lista de campos que podem ser arrays no seu sistema
+
+        camposArray.forEach(campo => {
+            if (dados[campo]) {
+                try {
+                    // Tenta converter de String JSON para Array JS
+                    dados[campo] = JSON.parse(dados[campo]);
+                } catch (e) {
+                    // Se não for JSON (ex: veio vazio ou formato errado), não faz nada ou define vazio
+                    console.warn(`Falha ao converter JSON do campo ${campo}`);
+                }
+            }
+        });
+
+        const cd = new Cd(dados);
         await cd.save();
         res.status(201).json(cd);
     } catch (error) {

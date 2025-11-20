@@ -69,8 +69,8 @@ document.addEventListener('DOMContentLoaded', async () => {
 
             descricao.textContent = config.getDescricao(item);
 
-            if (item.urlCapa) {
-                img.src = item.urlCapa;
+            if (item.urlFoto) {
+                img.src = item.urlFoto;
             } else {
                 img.src = '../public/images/imgN-A.png'
             }
