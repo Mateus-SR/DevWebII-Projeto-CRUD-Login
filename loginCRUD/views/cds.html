@@ -11,7 +11,17 @@
 <body class="bg-teal-700">
     {% include header.html %}
 
-    {% include divItem.html %}
+    <main id="listaItem" tipoData="cds"
+        class="mt-10 m-auto flex flex-wrap justify-center p-5 rounded-2xl bg-white w-1/2 border-b-8 border border-teal-800 shadow-2xl">
+        <div class="font-comfortaa">
+            <p class="text-teal-800 text-2xl animate-pulse font-extrabold">Carregando...</p>
+            <p class="text-black text-md italic">Por favor, aguarde.</p>
+        </div>
+    </main>
+
+    <template id="templateDiv">
+        {% include divItem.html %}
+    </template>
 
     {% include scriptsGerais.html %}
 </body>
