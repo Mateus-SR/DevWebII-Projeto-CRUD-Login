@@ -12,6 +12,7 @@ var autoresRouter = require('./routes/autores');
 var livrosRouter = require('./routes/livros');
 var cdsRouter = require('./routes/cds');
 var dvdsRouter = require('./routes/dvds');
+var hqsRouter = require('./routes/hqs');
 
 var mongoose = require('mongoose');
 mongoose.connect(process.env.MONGODB)
@@ -42,6 +43,7 @@ app.use('/autores', autoresRouter);
 app.use('/livros', livrosRouter);
 app.use('/cds', cdsRouter);
 app.use('/dvds', dvdsRouter);
+app.use('/hqs', hqsRouter);
 
 // catch 404 and forward to error handler
 app.use(function(req, res, next) {

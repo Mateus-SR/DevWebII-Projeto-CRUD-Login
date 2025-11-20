@@ -1,19 +1,16 @@
-import { getTokenJWT, setTokenJWT, logout } from './config.js';
-
-
 document.addEventListener('DOMContentLoaded', () => {
-    const botaoConta = document?.getElementById('botaoConta'); // Seleciona o span da engrenagem
-    
     if (botaoConta) {
+        const botaoConta = document?.getElementById('botaoConta');
         const jwt_token = getTokenJWT();
 
         if (jwt_token) {
             botaoConta.textContent = "Sair";
-            botaoConta.onclick = () => {
-                logout(); // Chama a função do config.js
+            botaoConta.href = "#"; 
+            botaoConta.onclick = (e) => {
+                e.preventDefault();
+                logout(); 
             };
         } else {
-            // Usuário DESLOGADO
             botaoConta.innerHTML = '<a href="login.html">Fazer Login</a>';
         }
     }
