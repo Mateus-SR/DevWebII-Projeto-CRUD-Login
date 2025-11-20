@@ -9,24 +9,24 @@ document.addEventListener('DOMContentLoaded', async () => {
     const tipoPagina = container.getAttribute('tipoData');
 
     const configuracoes = {
-        'hqs': {
+        'hqs': { //adicionar os demais campos do banco de dados
             endpoint: '/hqs',
-            getDescricao: (item) => `Tipo: ${item.tipo} \n Gênero: ${item.genero ? item.genero.join(', ') : 'N/A'}`,
-            getTitulo: (item) => item.nome
-        },
+            getDescricao: (item) => `Tipo: ${item.tipo}\nGênero: ${item.genero ? item.genero.join(', ') : 'N/A'}`,
+            getTitulo: (item) => item.nome,
+            getTituloAlt: (item) => item.nomeAlt && item.nomeAlt.length > 0 ? item.nomeAlt.join(', ') : ''        },
         'livros': {
             endpoint: '/livros',
-            getDescricao: (item) => `Ano: ${item.ano} | Gênero: ${item.genero ? item.genero.join(', ') : 'N/A'}`,
+            getDescricao: (item) => `Ano: ${item.ano}\nGênero: ${item.genero ? item.genero.join(', ') : 'N/A'}`,
             getTitulo: (item) => item.nome
         },
         'cds': {
             endpoint: '/cds',
-            getDescricao: (item) => `Ano: ${item.ano} | Faixas: ${item.faixasTotal || 0}`,
+            getDescricao: (item) => `Ano: ${item.ano}\nTotal de faixas: ${item.faixasTotal || 0}`,
             getTitulo: (item) => item.titulo
         },
         'dvds': {
             endpoint: '/dvds',
-            getDescricao: (item) => `Duração: ${item.duracao} min | Ano: ${item.ano}`,
+            getDescricao: (item) => `Duração: ${item.duracao} min\nAno: ${item.ano}`,
             getTitulo: (item) => item.nome
         },
         'autores': {
@@ -51,17 +51,28 @@ document.addEventListener('DOMContentLoaded', async () => {
         itens.forEach(item => {
             const templateClone = template.content.cloneNode(true);
 
-            const img = templateClone.querySelector('.divFotoItem');
+            const img = templateClone.querySelector('.fotoItem');
             const titulo = templateClone.querySelector('.divTitulo')
+            const tituloAlt = templateClone.querySelector('.divTituloAlt')
             const descricao = templateClone.querySelector('.divDescricao');
 
             titulo.textContent = config.getTitulo(item);
+
+            if (config.getTituloAlt) {
+                const alt = config.getTituloAlt(item);
+                if (alt) {
+                    tituloAlt.textContent = config.getTituloAlt(item);
+                }
+            } else {
+                tituloAlt.remove();
+            }
+
             descricao.textContent = config.getDescricao(item);
 
             if (item.urlCapa) {
                 img.src = item.urlCapa;
             } else {
-                img.src = '../images/SEBOZO.png'
+                img.src = '../public/images/imgN-A.png'
             }
             img.alt = config.getTitulo(item);
 
