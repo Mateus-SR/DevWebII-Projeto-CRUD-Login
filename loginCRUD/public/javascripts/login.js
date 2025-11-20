@@ -1,9 +1,9 @@
 document.addEventListener('DOMContentLoaded', () => {
 
     const VERCEL_URL = "https://dev-web-ii-projeto-crud-login.vercel.app";
-    const formLogin = document.getElementById('formLogin');
-    if (formLogin) {
-        formLogin.addEventListener('submit', async (event) => {
+    const loginForm = document.getElementById('loginForm');
+    if (loginForm) {
+        loginForm.addEventListener('submit', async (event) => {
             event.preventDefault();
 
             const email = document.getElementById('email').value;

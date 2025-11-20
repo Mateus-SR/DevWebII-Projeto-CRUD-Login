@@ -1,8 +1,8 @@
 document.addEventListener('DOMContentLoaded', () => {
-    const formCadastro = document.getElementById('formCadastro');
+    const cadastroForm = document.getElementById('cadastroForm');
     
-    if (formCadastro) {
-        formCadastro.addEventListener('submit', async (event) => {
+    if (cadastroForm) {
+        cadastroForm.addEventListener('submit', async (event) => {
             event.preventDefault();
 
             const username = document.getElementById('text').value;

@@ -1,6 +1,7 @@
 document.addEventListener('DOMContentLoaded', () => {
+    const botaoConta = document?.getElementById('botaoConta');
+    
     if (botaoConta) {
-        const botaoConta = document?.getElementById('botaoConta');
         const jwt_token = getTokenJWT();
 
         if (jwt_token) {

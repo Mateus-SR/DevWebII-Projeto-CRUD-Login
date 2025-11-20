@@ -6,8 +6,8 @@ const Usuario = require('../models/Usuario');
 // Rota de Registro (POST /auth/register)
 router.post('/register', async (req, res) => {
     try {
-        const { email, password } = req.body;
-        const usuario = new Usuario({ email, password });
+        const { username, email, password } = req.body;
+        const usuario = new Usuario({ username, email, password });
         await usuario.save();
         res.status(201).json({ message: 'Usuário criado com sucesso!' });
     } catch (error) {

@@ -11,7 +11,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     const configuracoes = {
         'hqs': {
             endpoint: '/hqs',
-            getDescricao: (item) => `Tipo: ${item.tipo} | Gênero: ${item.genero ? item.genero.join(', ') : 'N/A'}`,
+            getDescricao: (item) => `Tipo: ${item.tipo} \n Gênero: ${item.genero ? item.genero.join(', ') : 'N/A'}`,
             getTitulo: (item) => item.nome
         },
         'livros': {
@@ -65,7 +65,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             }
             img.alt = config.getTitulo(item);
 
-            container;appendChild(templateClone)
+            container.appendChild(templateClone)
         });
     } catch (error) {
         console.error("Erro ao carregar itens:", error);
