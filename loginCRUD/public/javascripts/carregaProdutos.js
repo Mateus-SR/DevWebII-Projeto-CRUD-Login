@@ -11,7 +11,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     const configuracoes = {
         'hqs': { //adicionar os demais campos do banco de dados
             endpoint: '/hqs',
-            getDescricao: (item) => `Tipo: ${item.tipo}\nGênero: ${item.genero ? item.genero.join(', ') : 'N/A'}`,
+            getDescricao: (item) => `Tipo: ${item.tipo}\nGênero: ${item.genero ? item.genero.join('\n') : 'N/A'}`,
             getTitulo: (item) => item.nome,
             getTituloAlt: (item) => {
                 if (!item.nomeAlt || item.nomeAlt.length === 0) return '';
@@ -29,12 +29,12 @@ document.addEventListener('DOMContentLoaded', async () => {
                     return nome;
                 });
 
-                return nomesLimpos.join(', ');
+                return nomesLimpos.join('\n');
             }
         },
         'livros': {
             endpoint: '/livros',
-            getDescricao: (item) => `Ano: ${item.ano}\nGênero: ${item.genero ? item.genero.join(', ') : 'N/A'}`,
+            getDescricao: (item) => `Ano: ${item.ano}\nGênero: ${item.genero ? item.genero.join('\n') : 'N/A'}`,
             getTitulo: (item) => item.nome
         },
         'cds': {
@@ -93,6 +93,45 @@ document.addEventListener('DOMContentLoaded', async () => {
                 img.src = '../public/images/imgN-A.png'
             }
             img.alt = config.getTitulo(item);
+
+            const estaLogado = localStorage.getItem('jwt_token');
+            if (estaLogado) {
+                const divBotoes = document.createElement('div');
+                divBotoes.className = "absolute  bottom-5 right-5 flex gap-5 bg-teal-50/80 px-3 py-1.5 rounded-lg shadow-sm";
+
+                const botaoEditar = document.createElement('button');
+                botaoEditar.innerHTML = "Editar"; // seria legal usar font-awesome aqui
+                botaoEditar.className = "underline underline-offset-1 hover:text-teal-500 cursor-pointer font-roboto-mono text-md";
+
+                botaoEditar.onclick = (e) => {
+                    e.stopPropagation();
+                    window.location.href = `../views/criacaoItem.html?tipo=${tipoPagina}&id=${item._id}`;
+                };
+
+                const botaoExcluir = document.createElement('button');
+                botaoExcluir.innerHTML = "Excluir"; // seria legal usar font-awesome aqui
+                botaoExcluir.className = "underline underline-offset-1 hover:text-red-500 cursor-pointer font-roboto-mono text-md";
+
+                botaoExcluir.onclick = async (e) => {
+                    e.stopPropagation();
+                    if(confirm("Deseja mesmo excluir esse item?\nEssa ação não pode ser desfeita."))
+                        try {
+                            await fetch(`${VERCEL_URL}${config.endpoint}/${item.id}`, {
+                                method: 'DELETE',
+                                headers: { 'Authorization': `Bearer ${token}` }
+                            });
+                            alert(`Item ${item.id} removido.`);
+                            window.location.reload();
+                        } catch (error) {
+                            alert(`Ocorreu um erro ao remover o item ${item.id}`);
+                        };
+                };
+
+                divBotoes.appendChild(botaoEditar);
+                divBotoes.appendChild(botaoExcluir);
+                templateClone.querySelector('.relative').appendChild(divBotoes);
+            };
+
 
             container.appendChild(templateClone)
         });

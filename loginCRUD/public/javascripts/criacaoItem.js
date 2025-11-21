@@ -1,4 +1,7 @@
 let listaAutores = [];
+// Variáveis globais para controle de edição
+let editMode = false;
+let currentId = null;
 
 // --- DEFINIÇÃO DOS SCHEMAS (Configuração dos Campos) ---
 const getSchemas = () => ({
@@ -74,6 +77,34 @@ document.addEventListener('DOMContentLoaded', async () => {
     // 1. Carregar dados iniciais
     await carregarAutores(seletor);
 
+    // --- NOVO: Verificar se estamos em modo de edição ---
+    const urlParams = new URLSearchParams(window.location.search);
+    const paramId = urlParams.get('id');
+    const paramTipo = urlParams.get('tipo'); // Ex: 'hqs', 'livros'
+
+    if (paramId && paramTipo) {
+        editMode = true;
+        currentId = paramId;
+        
+        // Ajustar título da página
+        document.querySelector('h1').textContent = "Editar Item";
+        document.getElementById('botaoSavar').value = "Atualizar item";
+
+        // Selecionar o tipo correto no dropdown e renderizar
+        seletor.value = paramTipo;
+        seletor.disabled = true; // Trava a mudança de tipo na edição
+
+        const schemas = getSchemas();
+        const config = schemas[paramTipo];
+        
+        if (config) {
+            renderizarFormulario(config, container, form);
+            // Buscar dados do banco e preencher
+            await carregarDadosEdicao(paramTipo, paramId, config);
+        }
+    }
+    // ----------------------------------------------------
+
     // 2. Configurar Eventos Principais
     seletor.addEventListener('change', (e) => {
         const schemas = getSchemas();
@@ -86,7 +117,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     form.addEventListener('submit', (e) => processarEnvio(e, seletor, token));
 });
 
-// --- FUNÇÕES AUXILIARES (Lógica separada) ---
+// --- FUNÇÕES AUXILIARES ---
 
 async function carregarAutores(seletor) {
     seletor.disabled = true;
@@ -99,7 +130,8 @@ async function carregarAutores(seletor) {
         
         if (Array.isArray(dados)) {
             listaAutores = dados;
-            seletor.disabled = false;
+            // Só reabilita se não estiver em modo edição
+            if (!editMode) seletor.disabled = false;
             opcaoPadrao.text = "Selecione uma categoria...";
             console.log(`✅ ${listaAutores.length} autores carregados.`);
         }
@@ -109,6 +141,41 @@ async function carregarAutores(seletor) {
     }
 }
 
+// --- NOVO: Função para buscar dados e preencher formulário ---
+async function carregarDadosEdicao(tipo, id, config) {
+    try {
+        const response = await fetch(`${VERCEL_URL}${config.endpoint}/${id}`);
+        if (!response.ok) throw new Error('Item não encontrado');
+        const item = await response.json();
+
+        // Preencher campos simples e arrays
+        config.campos.forEach(campo => {
+            const element = document.getElementById(campo.id);
+            
+            // Pular campo de imagem (não preenchemos file input por segurança) e listas complexas
+            if (campo.type === 'file') return;
+            if (campo.type === 'volumes-list') return preencherVolumes(campo.id, item[campo.id]);
+            if (campo.type === 'faixas-list') return preencherFaixas(campo.id, item[campo.id]);
+            if (campo.type === 'autor-search') return preencherAutoresSearch(campo, item);
+
+            if (element) {
+                // Tratamento para arrays simples (ex: generos)
+                if (campo.transform === 'array' && Array.isArray(item[campo.id])) {
+                    element.value = item[campo.id].join(', ');
+                } else {
+                    element.value = item[campo.id] || '';
+                }
+            }
+        });
+
+    } catch (error) {
+        console.error(error);
+        alert("Erro ao carregar dados para edição.");
+        window.location.href = 'index.html';
+    }
+}
+// -----------------------------------------------------------
+
 function renderizarFormulario(config, container, form) {
     container.innerHTML = '';
     form.classList.remove('hidden');
@@ -116,12 +183,8 @@ function renderizarFormulario(config, container, form) {
     config.campos.forEach(campo => {
         const divWrapper = document.createElement('div');
         divWrapper.className = "relative mb-4";
-        
-        // 1. Gera o HTML baseado no tipo
         divWrapper.innerHTML = gerarHTMLCampo(campo);
         container.appendChild(divWrapper);
-
-        // 2. Ativa a lógica (listeners, dropdowns, etc) após inserir no DOM
         setTimeout(() => configurarLogicaCampo(campo), 0);
     });
 }
@@ -173,7 +236,7 @@ function gerarHTMLCampo(campo) {
                 <input type="file" id="${campo.id}" accept="image/*" class="${inputBaseClass} bg-white">
             `;
 
-        default: // Texto, numero, url, etc.
+        default:
             return `
                 ${label}
                 <input type="${campo.type}" id="${campo.id}" ${campo.required ? 'required' : ''} class="${inputBaseClass}">
@@ -182,13 +245,16 @@ function gerarHTMLCampo(campo) {
 }
 
 function configurarLogicaCampo(campo) {
-    // Lógica específica para campos complexos
     if (campo.type === 'autor-search') {
-        configurarAutorSearch(campo);
+        // Passa funções globais para permitir preenchimento externo
+        window[`setupAuth_${campo.id}`] = configurarAutorSearch(campo);
     } else if (campo.type === 'volumes-list') {
-        configurarListaVolumes(campo);
+        window[`setupVols_${campo.id}`] = configurarListaVolumes(campo);
+        // Se for novo item, cria um vazio. Se for edição, esperamos a função de preencher.
+        if (!editMode) window[`setupVols_${campo.id}`].adicionar();
     } else if (campo.type === 'faixas-list') {
-        configurarListaFaixas(campo);
+        window[`setupFaixas_${campo.id}`] = configurarListaFaixas(campo);
+        if (!editMode) window[`setupFaixas_${campo.id}`].adicionar();
     }
 }
 
@@ -220,6 +286,16 @@ function configurarAutorSearch(campo) {
         if (campo.multiple) inputOculto.value = JSON.stringify(selecionados.map(s => s.id));
         else inputOculto.value = selecionados.length > 0 ? selecionados[0].id : '';
     };
+
+    // Função exposta para popular dados na edição
+    const setSelecionados = (novosDados) => {
+        selecionados = novosDados;
+        renderTags();
+        atualizarInput();
+        if (!campo.multiple && selecionados.length > 0) {
+            inputVisual.value = selecionados[0].nome;
+        }
+    }
 
     const filtrar = (texto) => {
         listaUl.innerHTML = '';
@@ -258,24 +334,52 @@ function configurarAutorSearch(campo) {
     inputVisual.addEventListener('input', (e) => filtrar(e.target.value));
     inputVisual.addEventListener('focus', () => filtrar(inputVisual.value));
     document.addEventListener('click', (e) => {
-        if (!inputVisual.parentElement.contains(e.target)) listaUl.classList.add('hidden');
+        if (inputVisual && !inputVisual.parentElement.contains(e.target)) listaUl.classList.add('hidden');
     });
+
+    return { setSelecionados };
+}
+
+// --- NOVO: Preenchimento de Autores na Edição ---
+function preencherAutoresSearch(campo, item) {
+    const setup = window[`setupAuth_${campo.id}`];
+    if (!setup) return;
+
+    // Backend pode retornar 'autores' (array de objetos) ou 'autor' (objeto único)
+    let dados = item[campo.id];
+    
+    // Normaliza para array de formato {id, nome}
+    let formatados = [];
+
+    if (Array.isArray(dados)) {
+        formatados = dados.map(a => ({ id: a._id, nome: a.nome }));
+    } else if (dados && typeof dados === 'object') {
+        formatados = [{ id: dados._id, nome: dados.nome }];
+    }
+
+    setup.setSelecionados(formatados);
 }
 
 function configurarListaVolumes(campo) {
     const btnAdd = document.getElementById(`btn-add-${campo.id}`);
     const containerVols = document.getElementById(`container-${campo.id}`);
 
-    const adicionarVolume = () => {
+    const adicionarVolume = (dados = null) => {
         const row = document.createElement('div');
-        row.className = "volume-item bg-gray-50 p-3 rounded-lg border border-gray-200 relative grid grid-cols-1 md:grid-cols-2 gap-3";
+        row.className = "volume-item bg-gray-50 p-3 rounded-lg border border-gray-200 relativeKv grid grid-cols-1 md:grid-cols-2 gap-3 mb-2";
+        
+        const tituloVal = dados ? dados.titulo || '' : '';
+        const tituloAltVal = dados ? dados.tituloAlt || '' : '';
+        const numVal = dados ? dados.volume : '';
+        const checkVal = dados ? (dados.emEstoque ? 'checked' : '') : 'checked';
+
         row.innerHTML = `
-            <input type="text" placeholder="Título do Volume (Opcional)" class="vol-titulo w-full border border-gray-300 p-2 rounded font-comfortaa text-sm">
-            <input type="text" placeholder="Título Alternativo (opcional)" class="vol-titulo-alt w-full border border-gray-300 p-2 rounded font-comfortaa text-sm">
+            <input type="text" value="${tituloVal}" placeholder="Título do Volume (Opcional)" class="vol-titulo w-full border border-gray-300 p-2 rounded font-comfortaa text-sm">
+            <input type="text" value="${tituloAltVal}" placeholder="Título Alternativo (opcional)" class="vol-titulo-alt w-full border border-gray-300 p-2 rounded font-comfortaa text-sm">
             <div class="flex gap-3">
-                <input type="number" placeholder="Nº Vol." class="vol-numero w-20 border border-gray-300 p-2 rounded font-comfortaa text-sm" required>
+                <input type="number" value="${numVal}" placeholder="Nº Vol." class="vol-numero w-20 border border-gray-300 p-2 rounded font-comfortaa text-sm" required>
                 <label class="flex items-center gap-2 text-sm text-gray-600 cursor-pointer select-none">
-                    <input type="checkbox" class="vol-estoque w-4 h-4 accent-teal-500" checked> Em Estoque
+                    <input type="checkbox" class="vol-estoque w-4 h-4 accent-teal-500" ${checkVal}> Em Estoque
                 </label>
             </div>
             <button type="button" class="absolute top-2 right-2 text-red-400 hover:text-red-600 font-bold text-xl" title="Remover">×</button>
@@ -284,8 +388,20 @@ function configurarListaVolumes(campo) {
         containerVols.appendChild(row);
     };
 
-    btnAdd.onclick = adicionarVolume;
-    adicionarVolume(); // Inicia com 1
+    btnAdd.onclick = () => adicionarVolume();
+    return { adicionar: adicionarVolume };
+}
+
+// --- NOVO: Preenchimento de Volumes ---
+function preencherVolumes(id, volumes) {
+    const container = document.getElementById(`container-${id}`);
+    container.innerHTML = ''; // Limpa o padrão
+    const setup = window[`setupVols_${id}`];
+    if (volumes && volumes.length > 0) {
+        volumes.forEach(vol => setup.adicionar(vol));
+    } else {
+        setup.adicionar(); // Adiciona um vazio se não tiver
+    }
 }
 
 function configurarListaFaixas(campo) {
@@ -296,13 +412,17 @@ function configurarListaFaixas(campo) {
         containerFaixas.querySelectorAll('.faixa-index').forEach((span, i) => span.textContent = i + 1);
     };
 
-    const adicionarFaixa = () => {
+    const adicionarFaixa = (dados = null) => {
         const row = document.createElement('div');
         row.className = "faixa-item bg-gray-50 p-2 rounded-lg border border-gray-200 flex gap-2 items-center";
+        
+        const tituloVal = dados ? dados.titulo || '' : '';
+        const duracaoVal = dados ? dados.duracao || '' : '';
+
         row.innerHTML = `
             <span class="faixa-index font-bold text-gray-400 select-none w-6 text-center">#</span>
-            <input type="text" placeholder="Nome da Música" class="faixa-titulo flex-1 border border-gray-300 p-2 rounded font-comfortaa text-sm" required>
-            <input type="text" placeholder="Duração (ex: 3:45)" class="faixa-duracao w-24 md:w-32 border border-gray-300 p-2 rounded font-comfortaa text-sm">
+            <input type="text" value="${tituloVal}" placeholder="Nome da Música" class="faixa-titulo flex-1 border border-gray-300 p-2 rounded font-comfortaa text-sm" required>
+            <input type="text" value="${duracaoVal}" placeholder="Duração (ex: 3:45)" class="faixa-duracao w-24 md:w-32 border border-gray-300 p-2 rounded font-comfortaa text-sm">
             <button type="button" class="text-red-400 hover:text-red-600 font-bold text-xl px-2" title="Remover">×</button>
         `;
         row.querySelector('button').onclick = () => {
@@ -313,8 +433,20 @@ function configurarListaFaixas(campo) {
         atualizarIndices();
     };
 
-    btnAdd.onclick = adicionarFaixa;
-    adicionarFaixa();
+    btnAdd.onclick = () => adicionarFaixa();
+    return { adicionar: adicionarFaixa };
+}
+
+// --- NOVO: Preenchimento de Faixas ---
+function preencherFaixas(id, faixas) {
+    const container = document.getElementById(`container-${id}`);
+    container.innerHTML = '';
+    const setup = window[`setupFaixas_${id}`];
+    if (faixas && faixas.length > 0) {
+        faixas.forEach(f => setup.adicionar(f));
+    } else {
+        setup.adicionar();
+    }
 }
 
 // --- ENVIO DO FORMULÁRIO ---
@@ -361,19 +493,30 @@ async function processarEnvio(e, seletor, token) {
         }
     }
 
+    // --- NOVO: Lógica para POST (Criar) ou PUT (Atualizar) ---
+    const metodo = editMode ? 'PUT' : 'POST';
+    const urlFinal = editMode ? `${VERCEL_URL}${config.endpoint}/${currentId}` : `${VERCEL_URL}${config.endpoint}`;
+
     // Envio
     try {
-        const response = await fetch(`${VERCEL_URL}${config.endpoint}`, {
-            method: 'POST',
+        const response = await fetch(urlFinal, {
+            method: metodo,
             headers: { 'Authorization': `Bearer ${token}` },
             body: formData
         });
 
         const result = await response.json();
         if (response.ok) {
-            alert("Item adicionado com sucesso!");
-            seletor.value = ""; 
-            document.getElementById('formDinamico').classList.add('hidden');
+            const msg = editMode ? "Item atualizado com sucesso!" : "Item adicionado com sucesso!";
+            alert(msg);
+            if (editMode) {
+                // Se editou, volta pra home
+                window.location.href = 'index.html';
+            } else {
+                // Se criou, limpa o form
+                seletor.value = ""; 
+                document.getElementById('formDinamico').classList.add('hidden');
+            }
         } else {
             alert(`Erro: ${result.error || result.message}`);
         }
@@ -389,7 +532,7 @@ function coletarVolumes(containerId) {
     linhas.forEach(linha => {
         const titulo = linha.querySelector('.vol-titulo').value;
         const volume = linha.querySelector('.vol-numero').value;
-        if (titulo && volume) {
+        if (volume) { // Título pode ser opcional
             lista.push({
                 titulo: titulo,
                 tituloAlt: linha.querySelector('.vol-titulo-alt').value,

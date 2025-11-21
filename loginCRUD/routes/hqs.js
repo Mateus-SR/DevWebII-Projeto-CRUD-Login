@@ -70,9 +70,33 @@ router.get('/:id', async (req, res) => {
 });
 
 // 5.3: PUT (Atualizar) - Protegido
-router.put('/:id', authenticate, async (req, res) => {
+router.put('/:id', authenticate, upload.single('imagem'), async (req, res) => {
     try {
-        const hq = await Hq.findByIdAndUpdate(req.params.id, req.body, { new: true, runValidators: true });
+        // 1. Copia o corpo da requisição
+        const dados = { ...req.body };
+
+        // 2. Se enviou uma nova imagem, faz o upload e atualiza o campo urlFoto
+        if (req.file) {
+            const result = await uploadStream(req.file.buffer);
+            dados.urlFoto = result.secure_url;
+        }
+
+        // 3. Converte os campos que vêm como JSON String (mesma lógica do POST)
+        const camposArray = ['genero', 'autores', 'volumes', 'faixas', 'nomeAlt'];
+
+        camposArray.forEach(campo => {
+            if (dados[campo]) {
+                try {
+                    dados[campo] = JSON.parse(dados[campo]);
+                } catch (e) {
+                    console.warn(`Falha ao converter JSON do campo ${campo} no PUT`);
+                }
+            }
+        });
+
+        // 4. Atualiza no banco
+        const hq = await Hq.findByIdAndUpdate(req.params.id, dados, { new: true, runValidators: true });
+        
         if (!hq) return res.status(404).json({ message: 'Hq não encontrado' });
         res.json(hq);
     } catch (error) {
