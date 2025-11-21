@@ -16,17 +16,19 @@ document.addEventListener('DOMContentLoaded', async () => {
             getTituloAlt: (item) => {
                 if (!item.nomeAlt || item.nomeAlt.length === 0) return '';
 
-                // Tenta "limpar" o dado se ele vier estragado do banco (como string JSON)
+                // Essa parte serve para "limpar" o array de nomes alternativos, porque na hora de exibir, ele não reconhecia como varios nomes, daí tudo ficava junto
+                // flatMap() aqui funciona de forma parecida com o map(), mas ele limpa o array de valores nulos e garante que tudo aqui é um unico array, só então roda a função pra cada um dos itens que sobram (resumindo: nulos são descartados, varios arrays se tornam só um)
                 const nomesLimpos = item.nomeAlt.flatMap(nome => {
-                    // Se for uma string que começa com "[" e termina com "]", tenta converter
+                    // A lógica aqui é: se o nome que recebemos for mesmo uma string, tirando os espaços no começo e no fim, e começar com [ ou ], então transformamos em um array válido para ser lido como json
                     if (typeof nome === 'string' && nome.trim().startsWith('[') && nome.trim().endsWith(']')) {
                         try {
                             return JSON.parse(nome); // Transforma a string '["A","B"]' no array ["A","B"]
                         } catch (e) {
-                            return nome; // Se falhar, mantém como está
+                            return nome; // Se falhar, pode mandar do jeito que está
                         }
                     }
                     return nome;
+// https://www.reddit.com/r/swift/comments/6pomr8/trying_to_wrap_my_head_around_map_vs_flat_mapand link util
                 });
 
                 return nomesLimpos.join('\n');

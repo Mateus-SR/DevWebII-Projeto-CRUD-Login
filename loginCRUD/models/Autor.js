@@ -4,7 +4,8 @@ const Schema = mongoose.Schema;
 const autorSchema = new Schema({
     nome: { type: String, required: true },
     nacionalidade: { type: String },
-    urlFoto: { type: String }
+    urlFoto: { type: String },
+    ativo: { type: Boolean, default: true }
 }, {
     toJSON: { virtuals: true },
     toObject: { virtuals: true }
