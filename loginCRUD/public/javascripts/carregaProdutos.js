@@ -13,7 +13,25 @@ document.addEventListener('DOMContentLoaded', async () => {
             endpoint: '/hqs',
             getDescricao: (item) => `Tipo: ${item.tipo}\nGênero: ${item.genero ? item.genero.join(', ') : 'N/A'}`,
             getTitulo: (item) => item.nome,
-            getTituloAlt: (item) => item.nomeAlt && item.nomeAlt.length > 0 ? item.nomeAlt.join(', ') : ''        },
+            getTituloAlt: (item) => {
+                if (!item.nomeAlt || item.nomeAlt.length === 0) return '';
+
+                // Tenta "limpar" o dado se ele vier estragado do banco (como string JSON)
+                const nomesLimpos = item.nomeAlt.flatMap(nome => {
+                    // Se for uma string que começa com "[" e termina com "]", tenta converter
+                    if (typeof nome === 'string' && nome.trim().startsWith('[') && nome.trim().endsWith(']')) {
+                        try {
+                            return JSON.parse(nome); // Transforma a string '["A","B"]' no array ["A","B"]
+                        } catch (e) {
+                            return nome; // Se falhar, mantém como está
+                        }
+                    }
+                    return nome;
+                });
+
+                return nomesLimpos.join(', ');
+            }
+        },
         'livros': {
             endpoint: '/livros',
             getDescricao: (item) => `Ano: ${item.ano}\nGênero: ${item.genero ? item.genero.join(', ') : 'N/A'}`,

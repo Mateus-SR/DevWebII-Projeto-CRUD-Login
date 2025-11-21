@@ -26,7 +26,7 @@ router.post('/', authenticate, upload.single('imagem'), async (req, res) => {
         // 3. Converter campos "Array" que vieram como JSON String
         // O front-end manda arrays como string "[...]" via FormData.
         // O Mongoose precisa de Arrays reais. Vamos converter automaticamente:
-        const camposArray = ['genero', 'autores', 'volumes', 'faixas']; // Lista de campos que podem ser arrays no seu sistema
+        const camposArray = ['genero', 'autores', 'volumes', 'faixas', 'nomeAlt']; // Lista de campos que podem ser arrays no seu sistema
 
         camposArray.forEach(campo => {
             if (dados[campo]) {
