@@ -51,7 +51,7 @@ router.post('/', authenticate, upload.single('imagem'), async (req, res) => {
 // 5.2: GET (Listar) - Público
 router.get('/', async (req, res) => {
     try {
-        const hqs = await Hq.find().populate('autores');
+        const hqs = await Hq.find({ ativo: true }).populate('autores');
         res.json(hqs);
     } catch (error) {
         res.status(500).json({ error: error.message });
@@ -83,7 +83,11 @@ router.put('/:id', authenticate, async (req, res) => {
 // 5.3: DELETE (Deletar) - Protegido
 router.delete('/:id', authenticate, async (req, res) => {
     try {
-        const hq = await Hq.findByIdAndDelete(req.params.id);
+        const hq = await Hq.findByIdAndUpdate(
+            req.params.id, 
+            { ativo: false }, 
+            { new: true });
+
         if (!hq) return res.status(404).json({ message: 'Hq não encontrado' });
         res.json({ message: 'Hq deletado com sucesso' });
     } catch (error) {

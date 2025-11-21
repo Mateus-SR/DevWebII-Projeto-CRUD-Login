@@ -15,7 +15,8 @@ const cdSchema = new Schema ({
      faixasTotal: { type: Number, default: 0 },
 
     autor: { type: Schema.Types.ObjectId, ref: 'Autor', required: true },
-    urlFoto: { type: String }
+    urlFoto: { type: String },
+    ativo: { type: Boolean, default: true }
 });
 
 cdSchema.pre('save', function(next) {
