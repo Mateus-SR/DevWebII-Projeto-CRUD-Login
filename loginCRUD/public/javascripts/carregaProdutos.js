@@ -9,9 +9,9 @@ document.addEventListener('DOMContentLoaded', async () => {
     const tipoPagina = container.getAttribute('tipoData');
 
     const configuracoes = {
-        'hqs': { //adicionar os demais campos do banco de dados
+        'hqs': { // para fazer: adicionar os demais campos do banco de dados
             endpoint: '/hqs',
-            getDescricao: (item) => `Tipo: ${item.tipo}\nGênero: ${item.genero ? item.genero.join('\n') : 'N/A'}`,
+            getDescricao: (item) => `Tipo: ${item.tipo}\nGênero: ${item.genero ? item.genero.join(', ') : 'N/A'}`,
             getTitulo: (item) => item.nome,
             getTituloAlt: (item) => {
                 if (!item.nomeAlt || item.nomeAlt.length === 0) return '';
@@ -36,7 +36,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         },
         'livros': {
             endpoint: '/livros',
-            getDescricao: (item) => `Ano: ${item.ano}\nGênero: ${item.genero ? item.genero.join('\n') : 'N/A'}`,
+            getDescricao: (item) => `Ano: ${item.ano}\nGênero: ${item.genero ? item.genero.join(', ') : 'N/A'}`,
             getTitulo: (item) => item.nome
         },
         'cds': {
@@ -99,11 +99,11 @@ document.addEventListener('DOMContentLoaded', async () => {
             const estaLogado = localStorage.getItem('jwt_token');
             if (estaLogado) {
                 const divBotoes = document.createElement('div');
-                divBotoes.className = "absolute  bottom-5 right-5 flex gap-5 bg-teal-50/80 px-3 py-1.5 rounded-lg shadow-sm";
+                divBotoes.className = "absolute top-5 md:bottom-5 right-5 mx-auto flex flex-col-reverse md:flex-row gap-5 md:text-md text-sm";
 
                 const botaoEditar = document.createElement('button');
-                botaoEditar.innerHTML = "Editar"; // seria legal usar font-awesome aqui
-                botaoEditar.className = "underline underline-offset-1 hover:text-teal-500 cursor-pointer font-roboto-mono text-md";
+                botaoEditar.innerHTML = "<i class='fas fa-edit' style='font-size:24px'></i>";
+                botaoEditar.className = "underline underline-offset-1 w-10 h-10 p-2 bg-teal-800 hover:bg-teal-500 hover:text-white hover:animate-bump cursor-pointer font-roboto-mono text-md aspect-square transition-all duration-300 rounded-lg shadow-sm";
 
                 botaoEditar.onclick = (e) => {
                     e.stopPropagation();
@@ -111,8 +111,8 @@ document.addEventListener('DOMContentLoaded', async () => {
                 };
 
                 const botaoExcluir = document.createElement('button');
-                botaoExcluir.innerHTML = "Excluir"; // seria legal usar font-awesome aqui
-                botaoExcluir.className = "underline underline-offset-1 hover:text-red-500 cursor-pointer font-roboto-mono text-md";
+                botaoExcluir.innerHTML = "<i class='fas fa-trash-alt' style='font-size:24px'></i>";
+                botaoExcluir.className = "underline underline-offset-1 w-10 h-10 p-2 bg-red-800 hover:bg-red-500 hover:text-white hover:animate-bump cursor-pointer font-roboto-mono text-md aspect-square transition-all duration-300 rounded-lg shadow-sm";
 
                 botaoExcluir.onclick = async (e) => {
                     e.stopPropagation();

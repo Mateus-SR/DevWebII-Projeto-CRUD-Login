@@ -3,7 +3,8 @@ let listaAutores = [];
 let editMode = false;
 let currentId = null;
 
-// --- DEFINIÇÃO DOS SCHEMAS (Configuração dos Campos) ---
+// Configuração de schemas - estruturas a seguir para o banco de dados aceitar
+// A criação do formulário foi completamente automatizada por IA, teria sido bem chato configurar na mão todos esses campos
 const getSchemas = () => ({
     'hqs': {
         endpoint: '/hqs',
@@ -31,7 +32,7 @@ const getSchemas = () => ({
         endpoint: '/cds',
         campos: [
             { id: 'titulo', label: 'Título do Álbum', type: 'text', required: true },
-            { id: 'tipo', label: 'Tipo', type: 'text', required: true },
+            { id: 'tipo', label: 'Tipo', type: 'tipo-cd', required: true },
             { id: 'genero', label: 'Gênero Musical', type: 'text' },
             { id: 'ano', label: 'Ano', type: 'number' },
             { id: 'duracaoTotal', label: 'Duração Total (minutos)', type: 'number' },
@@ -63,6 +64,7 @@ const getSchemas = () => ({
 
 // --- INICIALIZAÇÃO ---
 document.addEventListener('DOMContentLoaded', async () => {
+    // Confirmando se temos acesso a essa pagina (estamos logados) ou não (entramos sem conta)
     const token = localStorage.getItem('jwt_token');
     if (!token) {
         alert("Você precisa estar logado!");
@@ -115,6 +117,22 @@ document.addEventListener('DOMContentLoaded', async () => {
     });
 
     form.addEventListener('submit', (e) => processarEnvio(e, seletor, token));
+
+    
+    document.addEventListener("visibilitychange", async () => {
+        if (document.visibilityState === 'visible') {
+            console.log("Aba ativa novamente. Verificando novos autores...");
+            try {
+                const response = await fetch(`${VERCEL_URL}/autores`);
+                const dados = await response.json();
+                if (Array.isArray(dados)) {
+                    listaAutores = dados;
+                }
+            } catch (e) {
+                console.error("Falha no auto-update de autores", e);
+            }
+        }
+    });
 });
 
 // --- FUNÇÕES AUXILIARES ---
@@ -133,7 +151,7 @@ async function carregarAutores(seletor) {
             // Só reabilita se não estiver em modo edição
             if (!editMode) seletor.disabled = false;
             opcaoPadrao.text = "Selecione uma categoria...";
-            console.log(`✅ ${listaAutores.length} autores carregados.`);
+            console.log(listaAutores);
         }
     } catch (error) {
         console.error("Erro ao carregar autores:", error);
@@ -196,11 +214,25 @@ function gerarHTMLCampo(campo) {
     switch (campo.type) {
         case 'autor-search':
             return `
-                ${label}
+                <div class="flex justify-between items-center mb-1">
+                    ${label.replace('mb-1', 'mb-0')} 
+
+                    <div class="group bg-green-700 hover:bg-green-500 text-white cursor-pointer flex items-center justify-center h-6 transition-all duration-300 rounded shadow-sm border border-teal-900">
+                        <a href="criacaoItem.html?tipo=autores" target="_blank" class="flex items-center px-2 h-full gap-0 group-hover:gap-1 transition-all duration-300" title="Criar novo autor">
+                            <i class='fas fa-plus text-[10px]'></i>
+                            <span class="max-w-0 overflow-hidden opacity-0 group-hover:max-w-xs group-hover:opacity-100 transition-all duration-300 whitespace-nowrap text-[10px] font-bold uppercase tracking-wide">
+                                Novo
+                            </span>
+                        </a>
+                    </div>
+                </div>
+
                 <div id="tags-${campo.id}" class="flex flex-wrap gap-2 mb-2"></div>
+                
                 <input type="text" id="${campo.id}-visual" class="${inputBaseClass}"
                     placeholder="${campo.multiple ? 'Digite para adicionar autores...' : 'Digite para buscar...'}" autocomplete="off">
                 <input type="hidden" id="${campo.id}">
+                
                 <ul id="lista-${campo.id}" class="hidden absolute w-full bg-white border border-gray-300 rounded-b-lg shadow-2xl max-h-60 overflow-y-auto z-50 mt-1"></ul>
             `;
         
@@ -215,6 +247,17 @@ function gerarHTMLCampo(campo) {
                     <option value="Graphic Novel">Graphic Novel</option>
                 </select>
             `;
+
+            case 'tipo-cd':
+                return `
+                    ${label}
+                    <select id="${campo.id}" ${campo.required ? 'required' : ''} class="${inputBaseClass} bg-white">
+                        <option value="" disabled selected>Selecione...</option>
+                        <option value="Musica">Musica</option>
+                        <option value="Áudio">Áudio</option>
+                        <option value="Outro">Outro</option>
+                    </select>
+                `;    
 
         case 'volumes-list':
             return `
