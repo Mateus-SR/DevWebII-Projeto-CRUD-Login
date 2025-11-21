@@ -51,7 +51,7 @@ router.post('/', authenticate, upload.single('imagem'), async (req, res) => {
 // 5.2: GET (Listar) - Público
 router.get('/', async (req, res) => {
     try {
-        const cds = await Cd.find({ ativo: true }).populate('autor');
+        const cds = await Cd.find().populate('autor');
         res.json(cds);
     } catch (error) {
         res.status(500).json({ error: error.message });
@@ -83,11 +83,7 @@ router.put('/:id', authenticate, async (req, res) => {
 // 5.3: DELETE (Deletar) - Protegido
 router.delete('/:id', authenticate, async (req, res) => {
     try {
-        const cd = await Cd.findByIdAndUpdate(
-            req.params.id, 
-            { ativo: false }, 
-            { new: true });
-
+        const cd = await Cd.findByIdAndDelete(req.params.id);
         if (!cd) return res.status(404).json({ message: 'Cd não encontrado' });
         res.json({ message: 'Cd deletado com sucesso' });
     } catch (error) {

@@ -51,7 +51,7 @@ router.post('/', authenticate, upload.single('imagem'), async (req, res) => {
 // 5.2: GET (Listar) - Público
 router.get('/', async (req, res) => {
     try {
-        const livros = await Livro.find({ ativo: true }).populate('autores');
+        const livros = await Livro.find().populate('autores');
         res.json(livros);
     } catch (error) {
         res.status(500).json({ error: error.message });
@@ -83,11 +83,7 @@ router.put('/:id', authenticate, async (req, res) => {
 // 5.3: DELETE (Deletar) - Protegido
 router.delete('/:id', authenticate, async (req, res) => {
     try {
-        const livro = await Livro.findByIdAndUpdate(
-            req.params.id, 
-            { ativo: false }, 
-            { new: true });
-
+        const livro = await Livro.findByIdAndDelete(req.params.id);
         if (!livro) return res.status(404).json({ message: 'Livro não encontrado' });
         res.json({ message: 'Livro deletado com sucesso' });
     } catch (error) {

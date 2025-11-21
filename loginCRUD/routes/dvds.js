@@ -51,7 +51,7 @@ router.post('/', authenticate, upload.single('imagem'), async (req, res) => {
 // 5.2: GET (Listar) - Público
 router.get('/', async (req, res) => {
     try {
-        const dvds = await Dvd.find({ ativo: true }).populate('autor');
+        const dvds = await Dvd.find().populate('autor');
         res.json(dvds);
     } catch (error) {
         res.status(500).json({ error: error.message });
@@ -83,11 +83,7 @@ router.put('/:id', authenticate, async (req, res) => {
 // 5.3: DELETE (Deletar) - Protegido
 router.delete('/:id', authenticate, async (req, res) => {
     try {
-        const dvd = await Dvd.findByIdAndUpdate(
-            req.params.id, 
-            { ativo: false }, 
-            { new: true });
-
+        const dvd = await Dvd.findByIdAndDelete(req.params.id);
         if (!dvd) return res.status(404).json({ message: 'Dvd não encontrado' });
         res.json({ message: 'Dvd deletado com sucesso' });
     } catch (error) {

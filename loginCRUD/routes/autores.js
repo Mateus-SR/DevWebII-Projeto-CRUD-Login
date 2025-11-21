@@ -51,7 +51,7 @@ router.post('/', authenticate, upload.single('imagem'), async (req, res) => {
 // 5.2: GET (Listar) - Público
 router.get('/', async (req, res) => {
     try {
-        const autores = await Autor.find({ ativo: true });
+        const autores = await Autor.find();
         res.json(autores);
     } catch (error) {
         res.status(500).json({ error: error.message });
@@ -88,11 +88,7 @@ router.put('/:id', authenticate, async (req, res) => {
 // 5.3: DELETE (Deletar) - Protegido
 router.delete('/:id', authenticate, async (req, res) => {
     try {
-        const autor = await Autor.findByIdAndUpdate(
-            req.params.id, 
-            { ativo: false }, 
-            { new: true });
-
+        const autor = await Autor.findByIdAndDelete(req.params.id);
         if (!autor) return res.status(404).json({ message: 'Autor não encontrado' });
         res.json({ message: 'Autor deletado com sucesso' });
     } catch (error) {

@@ -16,8 +16,7 @@ const hqSchema = new Schema ({
     volumeTotal: { type: Number, default: 0 },
 
     autores: [{ type: Schema.Types.ObjectId, ref: 'Autor', required: true }],
-    urlFoto: { type: String },
-    ativo: { type: Boolean, default: true }
+    urlFoto: { type: String }
 });
 
 hqSchema.pre('save', function(next) {

@@ -9,8 +9,7 @@ const dvdSchema = new Schema ({
     ano: { type: Number },
 
     autor: { type: Schema.Types.ObjectId, ref: 'Autor', required: true },
-    urlFoto: { type: String },
-    ativo: { type: Boolean, default: true }
+    urlFoto: { type: String }
 });
 
 module.exports = mongoose.model('Dvd', dvdSchema);
