@@ -37,7 +37,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                 { id: 'tipo', label: 'Tipo', type: 'tipo-hq', required: true },
                 { id: 'genero', label: 'Gêneros', type: 'text', transform: 'array' },
                 { id: 'autores', label: 'Autores', type: 'autor-search', multiple: true, required: true },
-                { id: 'urlFoto', label: 'URL da Capa', type: 'url' }
+                { id: 'imagem', label: 'Upload da Capa (opcional)', type: 'file' }
             ]
         },
         'livros': {
@@ -46,7 +46,8 @@ document.addEventListener('DOMContentLoaded', async () => {
                 { id: 'nome', label: 'Título', type: 'text', required: true },
                 { id: 'ano', label: 'Ano', type: 'number' },
                 { id: 'genero', label: 'Gêneros', type: 'text', transform: 'array' },
-                { id: 'autores', label: 'Autores', type: 'autor-search', multiple: true, required: true }
+                { id: 'autores', label: 'Autores', type: 'autor-search', multiple: true, required: true },
+                { id: 'imagem', label: 'Upload da Capa (opcional)', type: 'file' }
             ]
         },
         'cds': {
@@ -55,7 +56,8 @@ document.addEventListener('DOMContentLoaded', async () => {
                 { id: 'titulo', label: 'Título', type: 'text', required: true },
                 { id: 'tipo', label: 'Tipo', type: 'text', required: true },
                 { id: 'ano', label: 'Ano', type: 'number' },
-                { id: 'autor', label: 'Artista', type: 'autor-search', required: true }
+                { id: 'autor', label: 'Artista', type: 'autor-search', required: true },
+                { id: 'imagem', label: 'Upload da Capa (opcional)', type: 'file' }
             ]
         },
         'dvds': {
@@ -65,14 +67,16 @@ document.addEventListener('DOMContentLoaded', async () => {
                 { id: 'tipo', label: 'Tipo', type: 'text', required: true },
                 { id: 'duracao', label: 'Duração (min)', type: 'number' },
                 { id: 'ano', label: 'Ano', type: 'number' },
-                { id: 'autor', label: 'Diretor', type: 'autor-search', required: true }
+                { id: 'autor', label: 'Diretor', type: 'autor-search', required: true },
+                { id: 'imagem', label: 'Upload da Capa (opcional)', type: 'file' }
             ]
         },
         'autores': {
             endpoint: '/autores',
             campos: [
                 { id: 'nome', label: 'Nome', type: 'text', required: true },
-                { id: 'nacionalidade', label: 'Nacionalidade', type: 'text' }
+                { id: 'nacionalidade', label: 'Nacionalidade', type: 'text' },
+                { id: 'imagem', label: 'Upload da Foto (opcional)', type: 'file' }
             ]
         }
     };
@@ -198,6 +202,17 @@ document.addEventListener('DOMContentLoaded', async () => {
                     </select>
                 `;    
 
+            } else if (campo.type === 'file') {
+                divWrapper.innerHTML = `
+                    <label class="block font-vend-sans text-gray-700 mb-1 font-bold text-sm">${campo.label}</label>
+                    <input 
+                        type="file" 
+                        id="${campo.id}" 
+                        accept="image/*"
+                        class="w-full border border-gray-300 p-2.5 rounded-lg font-comfortaa bg-white"
+                    >
+                `;
+
             } else {
                 divWrapper.innerHTML = `
                     <label class="block font-vend-sans text-gray-700 mb-1 font-bold text-sm">${campo.label}</label>
@@ -211,36 +226,51 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     form.addEventListener('submit', async (e) => {
         e.preventDefault();
-        const config = schemas[seletor.value];
-        const dadosParaEnviar = {};
+        const tipo = seletor.value;
+        const config = schemas[tipo];
+        
+        // Usamos FormData em vez de objeto simples
+        const formData = new FormData();
 
         for (const campo of config.campos) {
             const input = document.getElementById(campo.id);
-            let valor = input.value;
-
-            if (campo.type === 'autor-search') {
-                if (!valor || valor === '[]') {
-                    alert(`Selecione pelo menos um ${campo.label}!`);
-                    return;
+            
+            if (campo.type === 'file') {
+                // Se tiver arquivo selecionado, adiciona
+                if (input.files[0]) {
+                    formData.append('imagem', input.files[0]);
                 }
-                if (campo.multiple) {
-                    valor = JSON.parse(valor);
-                } 
             } 
-            else if (campo.transform === 'array') {
-                valor = valor.split(',').map(s => s.trim()).filter(s => s);
-            } else if (campo.type === 'number') {
-                valor = Number(valor);
+            else if (campo.type === 'autor-search') {
+               // ... (validação de autor vazia igual antes) ...
+               let valorOculto = input.value;
+               
+               // O Multer recebe strings. Se for array (multiple), mandamos como JSON string
+               // O valorOculto já é uma string JSON "[id1, id2]" vinda da lógica anterior
+               formData.append(campo.id, valorOculto);
+            } 
+            else {
+                let valor = input.value;
+                // Tratamentos especiais
+                if (campo.transform === 'array') {
+                    // Transforma em array e DEPOIS em string JSON para o FormData
+                    const arr = valor.split(',').map(s => s.trim()).filter(s => s);
+                    formData.append(campo.id, JSON.stringify(arr));
+                } else {
+                    formData.append(campo.id, valor);
+                }
             }
-
-            dadosParaEnviar[campo.id] = valor;
         }
 
         try {
             const response = await fetch(`${VERCEL_URL}${config.endpoint}`, {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
-                body: JSON.stringify(dadosParaEnviar)
+                headers: {
+                    // NÃO coloque 'Content-Type': 'multipart/form-data'. 
+                    // O fetch coloca automaticamente com o boundary correto.
+                    'Authorization': `Bearer ${token}`
+                },
+                body: formData // Envia o FormData direto
             });
             
             const result = await response.json();
