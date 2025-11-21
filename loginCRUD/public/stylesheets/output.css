@@ -444,6 +444,12 @@
   .min-w-1\/2 {
     min-width: calc(1/2 * 100%);
   }
+  .min-w-2 {
+    min-width: calc(var(--spacing) * 2);
+  }
+  .min-w-2\/3 {
+    min-width: calc(2/3 * 100%);
+  }
   .flex-1 {
     flex: 1;
   }
@@ -701,6 +707,9 @@
   }
   .p-8 {
     padding: calc(var(--spacing) * 8);
+  }
+  .p-10 {
+    padding: calc(var(--spacing) * 10);
   }
   .px-1 {
     padding-inline: calc(var(--spacing) * 1);
