@@ -1,9 +1,18 @@
 const cloudinary = require('cloudinary').v2;
 const streamifier = require('streamifier');
 
-cloudinary.config({
-    secure: true
-});
+console.log("Tentando configurar Cloudinary. URL:", process.env.CLOUDINARY_URL ? "Encontrada" : "NÃO ENCONTRADA");
+
+if (process.env.CLOUDINARY_URL) {
+    cloudinary.config({
+        cloudinary_url: process.env.CLOUDINARY_URL,
+        secure: true
+    });
+} else {
+    cloudinary.config({
+        secure: true
+    });
+}
 
 // Função Helper de Upload (Continua igual)
 const uploadStream = (fileBuffer) => {
