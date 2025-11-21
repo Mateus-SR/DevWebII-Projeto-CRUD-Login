@@ -7,7 +7,7 @@ const hqSchema = new Schema ({
     tipo: { type: String, required: true },
     genero: [String],
     volumes: [{ 
-        titulo: { type: String, required: true },
+        titulo: { type: String },
         tituloAlt: { type: String },
         volume: { type: Number, required: true },
         emEstoque: { type: Boolean, required: true } 
