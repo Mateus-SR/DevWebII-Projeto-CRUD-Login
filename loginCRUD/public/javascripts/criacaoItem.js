@@ -308,8 +308,11 @@ function configurarAutorSearch(campo) {
     const inputOculto = document.getElementById(campo.id);
     const listaUl = document.getElementById(`lista-${campo.id}`);
     const tagsContainer = document.getElementById(`tags-${campo.id}`);
+    const btnRefresh = document.getElementById(`btn-refresh-${campo.id}`); // Seleciona o botão novo
+    
     let selecionados = [];
 
+    // --- Lógica de Renderização das Tags (Igual ao anterior) ---
     const renderTags = () => {
         tagsContainer.innerHTML = '';
         selecionados.forEach((item, index) => {
@@ -330,7 +333,6 @@ function configurarAutorSearch(campo) {
         else inputOculto.value = selecionados.length > 0 ? selecionados[0].id : '';
     };
 
-    // Função exposta para popular dados na edição
     const setSelecionados = (novosDados) => {
         selecionados = novosDados;
         renderTags();
@@ -340,9 +342,12 @@ function configurarAutorSearch(campo) {
         }
     }
 
+    // --- Lógica de Filtragem (Igual ao anterior) ---
     const filtrar = (texto) => {
         listaUl.innerHTML = '';
         const termo = texto.toLowerCase();
+        
+        // Usa a variável global listaAutores atualizada
         const filtrados = listaAutores.filter(autor => 
             autor.nome.toLowerCase().includes(termo) && 
             !selecionados.some(sel => sel.id === autor._id)
@@ -374,10 +379,49 @@ function configurarAutorSearch(campo) {
         listaUl.classList.remove('hidden');
     };
 
+    // --- NOVO: Lógica do Botão Refresh ---
+    if (btnRefresh) {
+        btnRefresh.onclick = async () => {
+            // Feedback visual (gira o ícone)
+            const icon = btnRefresh.querySelector('i');
+            icon.classList.add('fa-spin'); // Classe do FontAwesome para girar
+            
+            try {
+                const response = await fetch(`${VERCEL_URL}/autores`);
+                const dados = await response.json();
+                if (Array.isArray(dados)) {
+                    listaAutores = dados; // Atualiza a variável global
+                    console.log("Lista de autores atualizada via botão refresh!");
+                    
+                    // Se o usuário já digitou algo, refiltra com os novos dados
+                    if (inputVisual.value) {
+                        filtrar(inputVisual.value);
+                    } else if (document.activeElement === inputVisual) {
+                         // Se estiver focado mas vazio, mostra tudo (opcional)
+                         filtrar('');
+                    }
+                }
+            } catch (error) {
+                console.error("Erro ao atualizar autores:", error);
+                alert("Erro ao atualizar lista.");
+            } finally {
+                // Remove a animação
+                setTimeout(() => icon.classList.remove('fa-spin'), 500);
+            }
+        };
+    }
+
+    // Event Listeners
     inputVisual.addEventListener('input', (e) => filtrar(e.target.value));
     inputVisual.addEventListener('focus', () => filtrar(inputVisual.value));
     document.addEventListener('click', (e) => {
-        if (inputVisual && !inputVisual.parentElement.contains(e.target)) listaUl.classList.add('hidden');
+        // Fecha se clicar fora (exceto se clicar no input, na lista ou no botão refresh)
+        if (inputVisual && 
+            !inputVisual.parentElement.contains(e.target) && 
+            e.target !== btnRefresh && 
+            !btnRefresh.contains(e.target)) {
+            listaUl.classList.add('hidden');
+        }
     });
 
     return { setSelecionados };

@@ -61,7 +61,7 @@ router.get('/', async (req, res) => {
 // 5.2: GET (Buscar por ID) - Público
 router.get('/:id', async (req, res) => {
     try {
-        const cd = await Cd.findById(req.params.id);
+        const cd = await Cd.findById(req.params.id).populate('autor');
         if (!cd) return res.status(404).json({ message: 'Cd não encontrado' });
         res.json(cd);
     } catch (error) {

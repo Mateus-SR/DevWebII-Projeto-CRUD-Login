@@ -61,7 +61,7 @@ router.get('/', async (req, res) => {
 // 5.2: GET (Buscar por ID) - Público
 router.get('/:id', async (req, res) => {
     try {
-        const livro = await Livro.findById(req.params.id);
+        const livro = await Livro.findById(req.params.id).populate('autores');
         if (!livro) return res.status(404).json({ message: 'Livro não encontrado' });
         res.json(livro);
     } catch (error) {

@@ -61,7 +61,7 @@ router.get('/', async (req, res) => {
 // 5.2: GET (Buscar por ID) - Público
 router.get('/:id', async (req, res) => {
     try {
-        const dvd = await Dvd.findById(req.params.id);
+        const dvd = await Dvd.findById(req.params.id).populate('autor');
         if (!dvd) return res.status(404).json({ message: 'Dvd não encontrado' });
         res.json(dvd);
     } catch (error) {

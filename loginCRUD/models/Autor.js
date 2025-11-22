@@ -11,13 +11,6 @@ const autorSchema = new Schema({
     toObject: { virtuals: true }
 });
 
-
-autorSchema.virtual('livros', {
-    ref: 'Livro',           
-    localField: '_id',      
-    foreignField: 'autor' 
-});
-
 autorSchema.virtual('cds', {
     ref: 'Cd',
     localField: '_id',
@@ -37,7 +30,7 @@ autorSchema.virtual('dvds', {
 });
 
 autorSchema.virtual('livros', {
-    ref: 'Livros',
+    ref: 'Livro',
     localField: '_id',
     foreignField: 'autores'
 });
