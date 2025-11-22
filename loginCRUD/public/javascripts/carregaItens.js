@@ -10,11 +10,12 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     // --- Funções Auxiliares de Formatação ---
 
-    // Cria um link para a página de edição/visualização do autor
+    // 1. Cria link para a visualização do Autor (autores.html?id=...)
     const formatarAutorLink = (autorOuLista) => {
         if (!autorOuLista) return 'Desconhecido';
         
-        const criarLink = (a) => `<a href="../views/autores.html?tipo=autores&id=${a._id}" class="underline underline-offset-1 hover:text-teal-500 hover:font-bold transition-all">${a.nome}</a>`;
+        // Mudança: aponta para autores.html com ID, em vez de criacaoItem.html
+        const criarLink = (a) => `<a href="../views/autores.html?id=${a._id}" class="underline underline-offset-1 hover:text-teal-500 hover:font-bold transition-all">${a.nome}</a>`;
 
         if (Array.isArray(autorOuLista)) {
             if (autorOuLista.length === 0) return 'Desconhecido';
@@ -23,18 +24,46 @@ document.addEventListener('DOMContentLoaded', async () => {
         return criarLink(autorOuLista);
     };
 
-    // Cria uma lista visual para Volumes e Faixas com rolagem
-    const formatarLista = (lista, tipo) => {
+    const formatarArtistaLink = (artistaOuLista) => {
+        if (!artistaOuLista) return 'Desconhecido';
+        
+        // Mudança: aponta para autores.html com ID, em vez de criacaoItem.html
+        const criarLink = (a) => `<a href="../views/artista.html?id=${a._id}" class="underline underline-offset-1 hover:text-teal-500 hover:font-bold transition-all">${a.nome}</a>`;
+
+        if (Array.isArray(artistaOuLista)) {
+            if (artistaOuLista.length === 0) return 'Desconhecido';
+            return artistaOuLista.map(criarLink).join(', ');
+        }
+        return criarLink(artistaOuLista);
+    };
+
+    // 2. Cria link para as Obras do Autor (livros.html?id=...)
+    const formatarObraLink = (lista, nomeTipo, paginaHtml) => {
+        if (!lista || lista.length === 0) return [];
+        
+        // Gera: <a href="...">Titulo</a> (Tipo)
+        return lista.map(obra => 
+            `<li>
+                <a href="../views/${paginaHtml}?id=${obra._id}" class="underline underline-offset-1 hover:text-teal-500 hover:font-bold transition-all">
+                    ${obra.nome || obra.titulo}
+                </a> 
+                <span class="text-xs opacity-75 font-semibold">(${nomeTipo})</span>
+            </li>`
+        );
+    };
+
+    // 3. Formata listas genéricas (Volumes/Faixas) com scroll
+    const formatarListaDetalhes = (lista, tituloLista) => {
         if (!lista || lista.length === 0) return '';
         
         let html = `<div class="mt-2 p-2 bg-teal-800/30 rounded max-h-32 overflow-y-auto text-sm border border-teal-600/30">`;
-        html += `<p class="font-bold text-xs uppercase mb-1 opacity-70">${tipo}:</p><ul class="list-disc pl-4 space-y-1">`;
+        html += `<p class="font-bold text-xs uppercase mb-1 opacity-70">${tituloLista}:</p><ul class="list-disc pl-4 space-y-1">`;
         
         lista.forEach((item, index) => {
             let texto = '';
-            if (tipo === 'Volumes') {
+            if (tituloLista === 'Volumes') {
                 texto = `Vol. ${item.volume}: ${item.titulo || ''} ${!item.emEstoque ? '(Sem Estoque)' : ''}`;
-            } else if (tipo === 'Faixas') {
+            } else if (tituloLista === 'Faixas') {
                 texto = `${index + 1}. ${item.titulo} <span class="opacity-60 text-xs">(${item.duracao || '--:--'})</span>`;
             }
             html += `<li>${texto}</li>`;
@@ -52,7 +81,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             getDescricao: (item) => {
                 const generos = item.genero && item.genero.length > 0 ? item.genero.join(', ') : 'N/A';
                 const linksAutores = formatarAutorLink(item.autores);
-                const listaVolumes = formatarLista(item.volumes, 'Volumes');
+                const listaVolumes = formatarListaDetalhes(item.volumes, 'Volumes');
 
                 return `<strong>Tipo:</strong> ${item.tipo}<br>
                         <strong>Gênero:</strong> ${generos}<br>
@@ -87,10 +116,10 @@ document.addEventListener('DOMContentLoaded', async () => {
         'cds': {
             endpoint: '/cds',
             getDescricao: (item) => {
-                const linkAutor = formatarAutorLink(item.autor);
-                const listaFaixas = formatarLista(item.faixas, 'Faixas');
+                const linkArtista = formatarArtistaLink(item.autor);
+                const listaFaixas = formatarListaDetalhes(item.faixas, 'Faixas');
 
-                return `<strong>Artista:</strong> ${linkAutor}<br>
+                return `<strong>Artista:</strong> ${linkArtista}<br>
                         <strong>Ano:</strong> ${item.ano || 'N/A'}<br>
                         <strong>Total de faixas:</strong> ${item.faixasTotal || 0}
                         ${listaFaixas}`;
@@ -110,20 +139,43 @@ document.addEventListener('DOMContentLoaded', async () => {
         'autores': {
             endpoint: '/autores',
             getDescricao: (item) => {
-                // Agrega todas as obras encontradas
-                let obras = [];
-                if (item.livros && item.livros.length) obras.push(`${item.livros.length} Livros`);
-                if (item.hqs && item.hqs.length) obras.push(`${item.hqs.length} HQs`);
-                if (item.cds && item.cds.length) obras.push(`${item.cds.length} CDs`);
-                if (item.dvds && item.dvds.length) obras.push(`${item.dvds.length} DVDs`);
+                // Coleta e formata todas as obras com links
+                let linksObras = [];
+                
+                // Usa a função auxiliar para cada tipo de obra populada
+                linksObras.push(...formatarObraLink(item.livros, 'Livro', 'livros.html'));
+                linksObras.push(...formatarObraLink(item.hqs, 'HQ', 'hqs.html'));
+                linksObras.push(...formatarObraLink(item.cds, 'CD', 'cds.html'));
+                linksObras.push(...formatarObraLink(item.dvds, 'DVD', 'dvds.html'));
 
-                const resumoObras = obras.length > 0 ? obras.join(', ') : 'Nenhuma obra cadastrada';
+                const listaHtml = linksObras.length > 0 
+                    ? `<div class="mt-2 p-2 bg-teal-800/30 rounded max-h-40 overflow-y-auto text-sm border border-teal-600/30">
+                         <ul class="list-disc pl-4 space-y-1">${linksObras.join('')}</ul>
+                       </div>`
+                    : '<span class="italic opacity-70">Nenhuma obra cadastrada.</span>';
 
                 return `<strong>Nacionalidade:</strong> ${item.nacionalidade || 'N/A'}<br>
-                        <strong>Obras no acervo:</strong><br> ${resumoObras}`;
+                        <strong>Obras:</strong><br> ${listaHtml}`;
             },
             getTitulo: (item) => item.nome
-        }
+        },
+            endpoint: '/autores',
+            getDescricao: (item) => {
+                // Coleta e formata todas as obras com links
+                let linksObras = [];
+                
+                linksObras.push(...formatarObraLink(item.cds, 'CD', 'cds.html'));
+
+                const listaHtml = linksObras.length > 0 
+                    ? `<div class="mt-2 p-2 bg-teal-800/30 rounded max-h-40 overflow-y-auto text-sm border border-teal-600/30">
+                         <ul class="list-disc pl-4 space-y-1">${linksObras.join('')}</ul>
+                       </div>`
+                    : '<span class="italic opacity-70">Nenhuma obra cadastrada.</span>';
+
+                return `<strong>Nacionalidade:</strong> ${item.nacionalidade || 'N/A'}<br>
+                        <strong>Obras:</strong><br> ${listaHtml}`;
+            },
+            getTitulo: (item) => item.nome
     };
 
     const config = configuracoes[tipoPagina]
@@ -133,10 +185,30 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
 
     try {
-        const response = await fetch(`${VERCEL_URL}${config.endpoint}`);
-        const itens = await response.json();
+        // --- NOVA LÓGICA DE FETCH (ID ou Todos) ---
+        const urlParams = new URLSearchParams(window.location.search);
+        const paramId = urlParams.get('id');
+        
+        let url = `${VERCEL_URL}${config.endpoint}`;
+        
+        // Se tiver ID na URL, busca só aquele item específico (Rota GET /:id)
+        if (paramId) {
+            url += `/${paramId}`;
+        }
+
+        const response = await fetch(url);
+        const dados = await response.json();
+
+        // Se buscou por ID, o retorno é um Objeto único. Se buscou todos, é um Array.
+        // Normalizamos para sempre ser um array para o forEach funcionar.
+        const itens = Array.isArray(dados) ? dados : [dados];
 
         container.innerHTML = '';
+
+        if (itens.length === 0) {
+            container.innerHTML = '<p class="text-center text-white text-xl font-bold mt-10">Nenhum item encontrado.</p>';
+            return;
+        }
 
         itens.forEach(item => {
             const templateClone = template.content.cloneNode(true);
@@ -155,9 +227,8 @@ document.addEventListener('DOMContentLoaded', async () => {
                 tituloAlt.remove();
             }
 
-            // --- MUDANÇA PRINCIPAL AQUI: innerHTML para renderizar HTML ---
+            // Renderiza o HTML (links, listas, negrito)
             descricao.innerHTML = config.getDescricao(item);
-            // -------------------------------------------------------------
 
             if (item.urlFoto) {
                 img.src = item.urlFoto;
@@ -177,7 +248,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
                 botaoEditar.onclick = (e) => {
                     e.stopPropagation();
-                    // O link do autor também usa essa mesma estrutura de URL
+                    // Para editar, continua indo para a página de criação com o ID
                     window.location.href = `../views/criacaoItem.html?tipo=${tipoPagina}&id=${item._id}`;
                 };
 
@@ -194,12 +265,18 @@ document.addEventListener('DOMContentLoaded', async () => {
                                 headers: { 'Authorization': `Bearer ${estaLogado}` }
                             });
                             if (!response.ok) {
-                                const erro = await response.json();
+                                // Tenta ler erro da API, se houver
+                                const erro = await response.json().catch(() => ({})); 
                                 throw new Error(erro.message || 'Falha ao excluir');
                             }
 
                             alert(`Item removido com sucesso.`);
-                            window.location.reload();
+                            // Se estiver na página de detalhe (com ID), volta para a lista geral
+                            if (paramId) {
+                                window.location.href = `${tipoPagina}.html`;
+                            } else {
+                                window.location.reload();
+                            }
                         } catch (error) {
                             console.error(error);
                             alert(`Ocorreu um erro ao remover o item: ${error.message}`);
@@ -216,9 +293,10 @@ document.addEventListener('DOMContentLoaded', async () => {
     } catch (error) {
         console.error("Erro ao carregar itens:", error);
         container.innerHTML = `
-        <div class="font-comfortaa">
+        <div class="font-comfortaa mx-auto text-center mt-10 p-5 bg-teal-50 rounded shadow">
             <p class="text-teal-800 text-2xl font-extrabold">Erro!</p>
             <p class="text-black text-md italic">Ocorreu um erro ao carregar os itens.</p>
+            <p class="text-xs text-gray-500 mt-2">${error.message}</p>
         </div>`
     }
 });

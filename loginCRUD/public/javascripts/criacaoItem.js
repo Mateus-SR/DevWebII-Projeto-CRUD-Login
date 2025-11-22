@@ -1,10 +1,10 @@
 let listaAutores = [];
+let listaArtistas = []; // NOVO: Lista para artistas/bandas
 // Variáveis globais para controle de edição
 let editMode = false;
 let currentId = null;
 
-// Configuração de schemas - estruturas a seguir para o banco de dados aceitar
-// A criação do formulário foi completamente automatizada por IA, teria sido bem chato configurar na mão todos esses campos
+// Configuração de schemas
 const getSchemas = () => ({
     'hqs': {
         endpoint: '/hqs',
@@ -36,7 +36,8 @@ const getSchemas = () => ({
             { id: 'genero', label: 'Gênero Musical', type: 'text' },
             { id: 'ano', label: 'Ano', type: 'number' },
             { id: 'duracaoTotal', label: 'Duração Total (minutos)', type: 'number' },
-            { id: 'autor', label: 'Artista/Banda', type: 'autor-search', required: true },
+            // ALTERADO: Agora usa 'artista' e o tipo 'artista-search'
+            { id: 'artista', label: 'Artista/Banda', type: 'artista-search', required: true },
             { id: 'faixas', label: 'Lista de Faixas', type: 'faixas-list' },
             { id: 'imagem', label: 'Upload da Capa', type: 'file' }
         ]
@@ -59,12 +60,20 @@ const getSchemas = () => ({
             { id: 'nacionalidade', label: 'Nacionalidade', type: 'text' },
             { id: 'imagem', label: 'Upload da Foto (opcional)', type: 'file' }
         ]
+    },
+    // NOVO SCHEMA: Artistas
+    'artistas': {
+        endpoint: '/artistas',
+        campos: [
+            { id: 'nome', label: 'Nome da Banda/Artista', type: 'text', required: true },
+            { id: 'nacionalidade', label: 'Nacionalidade', type: 'text' },
+            { id: 'imagem', label: 'Upload da Foto (opcional)', type: 'file' }
+        ]
     }
 });
 
 // --- INICIALIZAÇÃO ---
 document.addEventListener('DOMContentLoaded', async () => {
-    // Confirmando se temos acesso a essa pagina (estamos logados) ou não (entramos sem conta)
     const token = localStorage.getItem('jwt_token');
     if (!token) {
         alert("Você precisa estar logado!");
@@ -76,36 +85,32 @@ document.addEventListener('DOMContentLoaded', async () => {
     const form = document.getElementById('formDinamico');
     const container = document.getElementById('camposContainer');
 
-    // 1. Carregar dados iniciais
-    await carregarAutores(seletor);
+    // 1. Carregar dados iniciais (Autores E Artistas)
+    await Promise.all([carregarAutores(seletor), carregarArtistas()]);
 
-    // --- NOVO: Verificar se estamos em modo de edição ---
+    // --- Verificar se estamos em modo de edição ---
     const urlParams = new URLSearchParams(window.location.search);
     const paramId = urlParams.get('id');
-    const paramTipo = urlParams.get('tipo'); // Ex: 'hqs', 'livros'
+    const paramTipo = urlParams.get('tipo');
 
     if (paramId && paramTipo) {
         editMode = true;
         currentId = paramId;
         
-        // Ajustar título da página
         document.querySelector('h1').textContent = "Editar Item";
         document.getElementById('botaoSavar').value = "Atualizar item";
 
-        // Selecionar o tipo correto no dropdown e renderizar
         seletor.value = paramTipo;
-        seletor.disabled = true; // Trava a mudança de tipo na edição
+        seletor.disabled = true;
 
         const schemas = getSchemas();
         const config = schemas[paramTipo];
         
         if (config) {
             renderizarFormulario(config, container, form);
-            // Buscar dados do banco e preencher
             await carregarDadosEdicao(paramTipo, paramId, config);
         }
     }
-    // ----------------------------------------------------
 
     // 2. Configurar Eventos Principais
     seletor.addEventListener('change', (e) => {
@@ -118,18 +123,24 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     form.addEventListener('submit', (e) => processarEnvio(e, seletor, token));
 
-    
+    // Auto-update ao focar na aba
     document.addEventListener("visibilitychange", async () => {
         if (document.visibilityState === 'visible') {
-            console.log("Aba ativa novamente. Verificando novos autores...");
+            console.log("Verificando atualizações...");
+            // Recarrega silenciosamente as listas
             try {
-                const response = await fetch(`${VERCEL_URL}/autores`);
-                const dados = await response.json();
-                if (Array.isArray(dados)) {
-                    listaAutores = dados;
-                }
+                const [resAutores, resArtistas] = await Promise.all([
+                    fetch(`${VERCEL_URL}/autores`),
+                    fetch(`${VERCEL_URL}/artistas`)
+                ]);
+                
+                const dadosAutores = await resAutores.json();
+                const dadosArtistas = await resArtistas.json();
+
+                if (Array.isArray(dadosAutores)) listaAutores = dadosAutores;
+                if (Array.isArray(dadosArtistas)) listaArtistas = dadosArtistas;
             } catch (e) {
-                console.error("Falha no auto-update de autores", e);
+                console.error("Falha no auto-update", e);
             }
         }
     });
@@ -138,46 +149,52 @@ document.addEventListener('DOMContentLoaded', async () => {
 // --- FUNÇÕES AUXILIARES ---
 
 async function carregarAutores(seletor) {
-    seletor.disabled = true;
-    const opcaoPadrao = seletor.options[0];
-    opcaoPadrao.text = "Carregando autores...";
-
+    if(seletor) seletor.disabled = true;
+    
     try {
         const response = await fetch(`${VERCEL_URL}/autores`);
         const dados = await response.json();
         
         if (Array.isArray(dados)) {
             listaAutores = dados;
-            // Só reabilita se não estiver em modo edição
-            if (!editMode) seletor.disabled = false;
-            opcaoPadrao.text = "Selecione uma categoria...";
-            console.log(listaAutores);
+            if (!editMode && seletor) seletor.disabled = false;
         }
     } catch (error) {
         console.error("Erro ao carregar autores:", error);
-        opcaoPadrao.text = "Erro de conexão (Autores)";
     }
 }
 
-// --- NOVO: Função para buscar dados e preencher formulário ---
+// NOVO: Função para carregar Artistas
+async function carregarArtistas() {
+    try {
+        const response = await fetch(`${VERCEL_URL}/artistas`);
+        const dados = await response.json();
+        
+        if (Array.isArray(dados)) {
+            listaArtistas = dados;
+        }
+    } catch (error) {
+        console.error("Erro ao carregar artistas:", error);
+    }
+}
+
 async function carregarDadosEdicao(tipo, id, config) {
     try {
         const response = await fetch(`${VERCEL_URL}${config.endpoint}/${id}`);
         if (!response.ok) throw new Error('Item não encontrado');
         const item = await response.json();
 
-        // Preencher campos simples e arrays
         config.campos.forEach(campo => {
             const element = document.getElementById(campo.id);
             
-            // Pular campo de imagem (não preenchemos file input por segurança) e listas complexas
             if (campo.type === 'file') return;
             if (campo.type === 'volumes-list') return preencherVolumes(campo.id, item[campo.id]);
             if (campo.type === 'faixas-list') return preencherFaixas(campo.id, item[campo.id]);
             if (campo.type === 'autor-search') return preencherAutoresSearch(campo, item);
+            // NOVO: Preencher artista
+            if (campo.type === 'artista-search') return preencherArtistasSearch(campo, item);
 
             if (element) {
-                // Tratamento para arrays simples (ex: generos)
                 if (campo.transform === 'array' && Array.isArray(item[campo.id])) {
                     element.value = item[campo.id].join(', ');
                 } else {
@@ -192,7 +209,6 @@ async function carregarDadosEdicao(tipo, id, config) {
         window.location.href = 'index.html';
     }
 }
-// -----------------------------------------------------------
 
 function renderizarFormulario(config, container, form) {
     container.innerHTML = '';
@@ -216,103 +232,100 @@ function gerarHTMLCampo(campo) {
             return `
                 <div class="flex justify-between items-center mb-1">
                     ${label.replace('mb-1', 'mb-0')} 
-
                     <div class="group bg-green-700 hover:bg-green-500 text-white cursor-pointer flex items-center justify-center h-6 transition-all duration-300 rounded shadow-sm border border-teal-900">
                         <a href="criacaoItem.html?tipo=autores" target="_blank" class="flex items-center px-2 h-full gap-0 group-hover:gap-1 transition-all duration-300" title="Criar novo autor">
                             <i class='fas fa-plus text-[10px]'></i>
-                            <span class="max-w-0 overflow-hidden opacity-0 group-hover:max-w-xs group-hover:opacity-100 transition-all duration-300 whitespace-nowrap text-[10px] font-bold uppercase tracking-wide">
-                                Novo
-                            </span>
+                            <span class="max-w-0 overflow-hidden opacity-0 group-hover:max-w-xs group-hover:opacity-100 transition-all duration-300 whitespace-nowrap text-[10px] font-bold uppercase tracking-wide">Novo</span>
                         </a>
                     </div>
                 </div>
-
                 <div id="tags-${campo.id}" class="flex flex-wrap gap-2 mb-2"></div>
-                
-                <input type="text" id="${campo.id}-visual" class="${inputBaseClass}"
-                    placeholder="${campo.multiple ? 'Digite para adicionar autores...' : 'Digite para buscar...'}" autocomplete="off">
+                <input type="text" id="${campo.id}-visual" class="${inputBaseClass}" placeholder="${campo.multiple ? 'Digite para adicionar...' : 'Digite para buscar...'}" autocomplete="off">
                 <input type="hidden" id="${campo.id}">
-                
                 <ul id="lista-${campo.id}" class="hidden absolute w-full bg-white border border-gray-300 rounded-b-lg shadow-2xl max-h-60 overflow-y-auto z-50 mt-1"></ul>
             `;
         
-        case 'tipo-hq':
+        // NOVO: Campo para Artista (similar ao autor, mas linka para artistas)
+        case 'artista-search':
             return `
-                ${label}
-                <select id="${campo.id}" ${campo.required ? 'required' : ''} class="${inputBaseClass} bg-white">
+                <div class="flex justify-between items-center mb-1">
+                    ${label.replace('mb-1', 'mb-0')} 
+                    <div class="group bg-green-700 hover:bg-green-500 text-white cursor-pointer flex items-center justify-center h-6 transition-all duration-300 rounded shadow-sm border border-teal-900">
+                        <a href="criacaoItem.html?tipo=artistas" target="_blank" class="flex items-center px-2 h-full gap-0 group-hover:gap-1 transition-all duration-300" title="Criar novo artista">
+                            <i class='fas fa-plus text-[10px]'></i>
+                            <span class="max-w-0 overflow-hidden opacity-0 group-hover:max-w-xs group-hover:opacity-100 transition-all duration-300 whitespace-nowrap text-[10px] font-bold uppercase tracking-wide">Novo</span>
+                        </a>
+                    </div>
+                </div>
+                <div id="tags-${campo.id}" class="flex flex-wrap gap-2 mb-2"></div>
+                <input type="text" id="${campo.id}-visual" class="${inputBaseClass}" placeholder="Digite para buscar artista..." autocomplete="off">
+                <input type="hidden" id="${campo.id}">
+                <ul id="lista-${campo.id}" class="hidden absolute w-full bg-white border border-gray-300 rounded-b-lg shadow-2xl max-h-60 overflow-y-auto z-50 mt-1"></ul>
+            `;
+
+        case 'tipo-hq':
+            return `${label}<select id="${campo.id}" ${campo.required ? 'required' : ''} class="${inputBaseClass} bg-white">
                     <option value="" disabled selected>Selecione...</option>
                     <option value="HQ">HQ</option>
                     <option value="Mangá">Mangá</option>
                     <option value="Gibi">Gibi</option>
                     <option value="Graphic Novel">Graphic Novel</option>
-                </select>
-            `;
+                </select>`;
 
-            case 'tipo-cd':
-                return `
-                    ${label}
-                    <select id="${campo.id}" ${campo.required ? 'required' : ''} class="${inputBaseClass} bg-white">
-                        <option value="" disabled selected>Selecione...</option>
-                        <option value="Musica">Musica</option>
-                        <option value="Áudio">Áudio</option>
-                        <option value="Outro">Outro</option>
-                    </select>
-                `;    
+        case 'tipo-cd':
+            return `${label}<select id="${campo.id}" ${campo.required ? 'required' : ''} class="${inputBaseClass} bg-white">
+                    <option value="" disabled selected>Selecione...</option>
+                    <option value="Musica">Musica</option>
+                    <option value="Áudio">Áudio</option>
+                    <option value="Outro">Outro</option>
+                </select>`;    
 
         case 'volumes-list':
-            return `
-                <label class="block font-vend-sans text-gray-700 mb-2 font-bold text-sm">${campo.label}</label>
+            return `<label class="block font-vend-sans text-gray-700 mb-2 font-bold text-sm">${campo.label}</label>
                 <div id="container-${campo.id}" class="flex flex-col gap-3 mb-3"></div>
-                <button type="button" id="btn-add-${campo.id}" class="text-teal-600 border border-teal-600 px-4 py-2 rounded-lg hover:bg-teal-50 font-bold text-sm transition">+ Adicionar Volume</button>
-            `;
+                <button type="button" id="btn-add-${campo.id}" class="text-teal-600 border border-teal-600 px-4 py-2 rounded-lg hover:bg-teal-50 font-bold text-sm transition">+ Adicionar Volume</button>`;
 
         case 'faixas-list':
-            return `
-                <label class="block font-vend-sans text-gray-700 mb-2 font-bold text-sm">${campo.label}</label>
+            return `<label class="block font-vend-sans text-gray-700 mb-2 font-bold text-sm">${campo.label}</label>
                 <div id="container-${campo.id}" class="flex flex-col gap-2 mb-3"></div>
-                <button type="button" id="btn-add-${campo.id}" class="text-teal-600 border border-teal-600 px-4 py-2 rounded-lg hover:bg-teal-50 font-bold text-sm transition w-full md:w-auto">+ Adicionar Faixa</button>
-            `;
+                <button type="button" id="btn-add-${campo.id}" class="text-teal-600 border border-teal-600 px-4 py-2 rounded-lg hover:bg-teal-50 font-bold text-sm transition w-full md:w-auto">+ Adicionar Faixa</button>`;
 
         case 'file':
-            return `
-                ${label}
-                <input type="file" id="${campo.id}" accept="image/*" class="${inputBaseClass} bg-white">
-            `;
+            return `${label}<input type="file" id="${campo.id}" accept="image/*" class="${inputBaseClass} bg-white">`;
 
         default:
-            return `
-                ${label}
-                <input type="${campo.type}" id="${campo.id}" ${campo.required ? 'required' : ''} class="${inputBaseClass}">
-            `;
+            return `${label}<input type="${campo.type}" id="${campo.id}" ${campo.required ? 'required' : ''} class="${inputBaseClass}">`;
     }
 }
 
 function configurarLogicaCampo(campo) {
     if (campo.type === 'autor-search') {
-        // Passa funções globais para permitir preenchimento externo
         window[`setupAuth_${campo.id}`] = configurarAutorSearch(campo);
-    } else if (campo.type === 'volumes-list') {
+    } 
+    // NOVO: Configuração para Artista
+    else if (campo.type === 'artista-search') {
+        window[`setupArtist_${campo.id}`] = configurarArtistaSearch(campo);
+    }
+    else if (campo.type === 'volumes-list') {
         window[`setupVols_${campo.id}`] = configurarListaVolumes(campo);
-        // Se for novo item, cria um vazio. Se for edição, esperamos a função de preencher.
         if (!editMode) window[`setupVols_${campo.id}`].adicionar();
-    } else if (campo.type === 'faixas-list') {
+    } 
+    else if (campo.type === 'faixas-list') {
         window[`setupFaixas_${campo.id}`] = configurarListaFaixas(campo);
         if (!editMode) window[`setupFaixas_${campo.id}`].adicionar();
     }
 }
 
-// --- LÓGICA DOS CAMPOS COMPLEXOS ---
+// --- LÓGICA DE BUSCA (AUTOR e ARTISTA) ---
 
-function configurarAutorSearch(campo) {
+function configurarSearchGenerico(campo, listaDados, setupKey) {
     const inputVisual = document.getElementById(`${campo.id}-visual`);
     const inputOculto = document.getElementById(campo.id);
     const listaUl = document.getElementById(`lista-${campo.id}`);
     const tagsContainer = document.getElementById(`tags-${campo.id}`);
-    const btnRefresh = document.getElementById(`btn-refresh-${campo.id}`); // Seleciona o botão novo
     
     let selecionados = [];
 
-    // --- Lógica de Renderização das Tags (Igual ao anterior) ---
     const renderTags = () => {
         tagsContainer.innerHTML = '';
         selecionados.forEach((item, index) => {
@@ -342,31 +355,29 @@ function configurarAutorSearch(campo) {
         }
     }
 
-    // --- Lógica de Filtragem (Igual ao anterior) ---
     const filtrar = (texto) => {
         listaUl.innerHTML = '';
         const termo = texto.toLowerCase();
         
-        // Usa a variável global listaAutores atualizada
-        const filtrados = listaAutores.filter(autor => 
-            autor.nome.toLowerCase().includes(termo) && 
-            !selecionados.some(sel => sel.id === autor._id)
+        const filtrados = listaDados.filter(item => 
+            item.nome.toLowerCase().includes(termo) && 
+            !selecionados.some(sel => sel.id === item._id)
         );
 
         if (filtrados.length === 0) listaUl.innerHTML = `<li class="p-3 text-gray-500 italic">Nada encontrado.</li>`;
         else {
-            filtrados.forEach(autor => {
+            filtrados.forEach(item => {
                 const li = document.createElement('li');
                 li.className = "p-3 hover:bg-teal-100 cursor-pointer border-b border-gray-100 font-comfortaa text-sm";
-                li.textContent = autor.nome;
+                li.textContent = item.nome;
                 li.onclick = () => {
                     if (campo.multiple) {
-                        selecionados.push({ id: autor._id, nome: autor.nome });
+                        selecionados.push({ id: item._id, nome: item.nome });
                         inputVisual.value = '';
                         inputVisual.focus();
                     } else {
-                        selecionados = [{ id: autor._id, nome: autor.nome }];
-                        inputVisual.value = autor.nome;
+                        selecionados = [{ id: item._id, nome: item.nome }];
+                        inputVisual.value = item.nome;
                         listaUl.classList.add('hidden');
                     }
                     atualizarInput();
@@ -379,47 +390,10 @@ function configurarAutorSearch(campo) {
         listaUl.classList.remove('hidden');
     };
 
-    // --- NOVO: Lógica do Botão Refresh ---
-    if (btnRefresh) {
-        btnRefresh.onclick = async () => {
-            // Feedback visual (gira o ícone)
-            const icon = btnRefresh.querySelector('i');
-            icon.classList.add('fa-spin'); // Classe do FontAwesome para girar
-            
-            try {
-                const response = await fetch(`${VERCEL_URL}/autores`);
-                const dados = await response.json();
-                if (Array.isArray(dados)) {
-                    listaAutores = dados; // Atualiza a variável global
-                    console.log("Lista de autores atualizada via botão refresh!");
-                    
-                    // Se o usuário já digitou algo, refiltra com os novos dados
-                    if (inputVisual.value) {
-                        filtrar(inputVisual.value);
-                    } else if (document.activeElement === inputVisual) {
-                         // Se estiver focado mas vazio, mostra tudo (opcional)
-                         filtrar('');
-                    }
-                }
-            } catch (error) {
-                console.error("Erro ao atualizar autores:", error);
-                alert("Erro ao atualizar lista.");
-            } finally {
-                // Remove a animação
-                setTimeout(() => icon.classList.remove('fa-spin'), 500);
-            }
-        };
-    }
-
-    // Event Listeners
     inputVisual.addEventListener('input', (e) => filtrar(e.target.value));
     inputVisual.addEventListener('focus', () => filtrar(inputVisual.value));
     document.addEventListener('click', (e) => {
-        // Fecha se clicar fora (exceto se clicar no input, na lista ou no botão refresh)
-        if (inputVisual && 
-            !inputVisual.parentElement.contains(e.target) && 
-            e.target !== btnRefresh && 
-            !btnRefresh.contains(e.target)) {
+        if (inputVisual && !inputVisual.parentElement.contains(e.target)) {
             listaUl.classList.add('hidden');
         }
     });
@@ -427,15 +401,29 @@ function configurarAutorSearch(campo) {
     return { setSelecionados };
 }
 
-// --- NOVO: Preenchimento de Autores na Edição ---
+// Wrappers para usar a função genérica com as listas corretas
+function configurarAutorSearch(campo) {
+    return configurarSearchGenerico(campo, listaAutores);
+}
+
+function configurarArtistaSearch(campo) {
+    return configurarSearchGenerico(campo, listaArtistas);
+}
+
 function preencherAutoresSearch(campo, item) {
     const setup = window[`setupAuth_${campo.id}`];
     if (!setup) return;
+    formatarEPreencherSearch(campo, item, setup);
+}
 
-    // Backend pode retornar 'autores' (array de objetos) ou 'autor' (objeto único)
+function preencherArtistasSearch(campo, item) {
+    const setup = window[`setupArtist_${campo.id}`];
+    if (!setup) return;
+    formatarEPreencherSearch(campo, item, setup);
+}
+
+function formatarEPreencherSearch(campo, item, setup) {
     let dados = item[campo.id];
-    
-    // Normaliza para array de formato {id, nome}
     let formatados = [];
 
     if (Array.isArray(dados)) {
@@ -443,9 +431,10 @@ function preencherAutoresSearch(campo, item) {
     } else if (dados && typeof dados === 'object') {
         formatados = [{ id: dados._id, nome: dados.nome }];
     }
-
     setup.setSelecionados(formatados);
 }
+
+// --- LÓGICA DE VOLUMES E FAIXAS ---
 
 function configurarListaVolumes(campo) {
     const btnAdd = document.getElementById(`btn-add-${campo.id}`);
@@ -453,7 +442,7 @@ function configurarListaVolumes(campo) {
 
     const adicionarVolume = (dados = null) => {
         const row = document.createElement('div');
-        row.className = "volume-item bg-gray-50 p-3 rounded-lg border border-gray-200 relativeKv grid grid-cols-1 md:grid-cols-2 gap-3 mb-2";
+        row.className = "volume-item bg-gray-50 p-3 rounded-lg border border-gray-200 grid grid-cols-1 md:grid-cols-2 gap-3 mb-2 relative";
         
         const tituloVal = dados ? dados.titulo || '' : '';
         const tituloAltVal = dados ? dados.tituloAlt || '' : '';
@@ -479,15 +468,14 @@ function configurarListaVolumes(campo) {
     return { adicionar: adicionarVolume };
 }
 
-// --- NOVO: Preenchimento de Volumes ---
 function preencherVolumes(id, volumes) {
     const container = document.getElementById(`container-${id}`);
-    container.innerHTML = ''; // Limpa o padrão
+    container.innerHTML = '';
     const setup = window[`setupVols_${id}`];
     if (volumes && volumes.length > 0) {
         volumes.forEach(vol => setup.adicionar(vol));
     } else {
-        setup.adicionar(); // Adiciona um vazio se não tiver
+        setup.adicionar();
     }
 }
 
@@ -524,7 +512,6 @@ function configurarListaFaixas(campo) {
     return { adicionar: adicionarFaixa };
 }
 
-// --- NOVO: Preenchimento de Faixas ---
 function preencherFaixas(id, faixas) {
     const container = document.getElementById(`container-${id}`);
     container.innerHTML = '';
@@ -547,30 +534,24 @@ async function processarEnvio(e, seletor, token) {
     for (const campo of config.campos) {
         const input = document.getElementById(campo.id);
 
-        // 1. Campo de Arquivo
         if (campo.type === 'file') {
             if (input.files[0]) formData.append('imagem', input.files[0]);
         } 
-        // 2. Campos de Listas (Volumes/Faixas) - Coleta Manual
         else if (campo.type === 'volumes-list') {
-            const dadosVolumes = coletarVolumes(campo.id);
-            formData.append(campo.id, JSON.stringify(dadosVolumes));
+            formData.append(campo.id, JSON.stringify(coletarVolumes(campo.id)));
         } 
         else if (campo.type === 'faixas-list') {
-            const dadosFaixas = coletarFaixas(campo.id);
-            formData.append(campo.id, JSON.stringify(dadosFaixas));
+            formData.append(campo.id, JSON.stringify(coletarFaixas(campo.id)));
         }
-        // 3. Campos Normais e Autores
         else {
             let valor = input.value;
             
-            // Validação de Autor
-            if (campo.type === 'autor-search' && (!valor || valor === '[]' || valor === '')) {
+            // Validação de Autor/Artista
+            if ((campo.type === 'autor-search' || campo.type === 'artista-search') && (!valor || valor === '[]' || valor === '')) {
                 alert(`Selecione pelo menos um ${campo.label}!`);
                 return;
             }
 
-            // Transformações
             if (campo.transform === 'array') {
                 const arr = valor.split(',').map(s => s.trim()).filter(s => s);
                 formData.append(campo.id, JSON.stringify(arr));
@@ -580,11 +561,9 @@ async function processarEnvio(e, seletor, token) {
         }
     }
 
-    // --- NOVO: Lógica para POST (Criar) ou PUT (Atualizar) ---
     const metodo = editMode ? 'PUT' : 'POST';
     const urlFinal = editMode ? `${VERCEL_URL}${config.endpoint}/${currentId}` : `${VERCEL_URL}${config.endpoint}`;
 
-    // Envio
     try {
         const response = await fetch(urlFinal, {
             method: metodo,
@@ -597,10 +576,8 @@ async function processarEnvio(e, seletor, token) {
             const msg = editMode ? "Item atualizado com sucesso!" : "Item adicionado com sucesso!";
             alert(msg);
             if (editMode) {
-                // Se editou, volta pra home
                 window.location.href = 'index.html';
             } else {
-                // Se criou, limpa o form
                 seletor.value = ""; 
                 document.getElementById('formDinamico').classList.add('hidden');
             }
@@ -619,7 +596,7 @@ function coletarVolumes(containerId) {
     linhas.forEach(linha => {
         const titulo = linha.querySelector('.vol-titulo').value;
         const volume = linha.querySelector('.vol-numero').value;
-        if (volume) { // Título pode ser opcional
+        if (volume) {
             lista.push({
                 titulo: titulo,
                 tituloAlt: linha.querySelector('.vol-titulo-alt').value,
