@@ -61,7 +61,6 @@ const getSchemas = () => ({
             { id: 'imagem', label: 'Upload da Foto (opcional)', type: 'file' }
         ]
     },
-    // NOVO SCHEMA: Artistas
     'artistas': {
         endpoint: '/artistas',
         campos: [

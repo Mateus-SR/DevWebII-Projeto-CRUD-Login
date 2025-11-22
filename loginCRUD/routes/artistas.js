@@ -53,10 +53,7 @@ router.get('/', async (req, res) => {
     try {
         // populate para preencher os campos virtuais
         const autores = await Artista.find()
-            .populate('livros')
             .populate('cds')
-            .populate('dvds')
-            .populate('hqs');
             
         res.json(autores);
     } catch (error) {
@@ -68,10 +65,7 @@ router.get('/', async (req, res) => {
 router.get('/:id', async (req, res) => {
     try {
         const artista = await Artista.findById(req.params.id)
-            .populate('livros')
             .populate('cds')
-            .populate('dvds')
-            .populate('hqs');
             
         if (!artista) return res.status(404).json({ message: 'Artista não encontrado' });
         res.json(artista);
