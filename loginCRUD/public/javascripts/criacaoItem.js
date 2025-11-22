@@ -1,5 +1,5 @@
 let listaAutores = [];
-let listaArtistas = []; // NOVO: Lista para artistas/bandas
+let listaArtistas = []; 
 // Variáveis globais para controle de edição
 let editMode = false;
 let currentId = null;
@@ -36,7 +36,6 @@ const getSchemas = () => ({
             { id: 'genero', label: 'Gênero Musical', type: 'text' },
             { id: 'ano', label: 'Ano', type: 'number' },
             { id: 'duracaoTotal', label: 'Duração Total (minutos)', type: 'number' },
-            // ALTERADO: Agora usa 'artista' e o tipo 'artista-search'
             { id: 'artista', label: 'Artista/Banda', type: 'artista-search', required: true },
             { id: 'faixas', label: 'Lista de Faixas', type: 'faixas-list' },
             { id: 'imagem', label: 'Upload da Capa', type: 'file' }
@@ -84,7 +83,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     const form = document.getElementById('formDinamico');
     const container = document.getElementById('camposContainer');
 
-    // 1. Carregar dados iniciais (Autores E Artistas)
+    // 1. Carregar dados iniciais
     await Promise.all([carregarAutores(seletor), carregarArtistas()]);
 
     // --- Verificar se estamos em modo de edição ---
@@ -126,7 +125,6 @@ document.addEventListener('DOMContentLoaded', async () => {
     document.addEventListener("visibilitychange", async () => {
         if (document.visibilityState === 'visible') {
             console.log("Verificando atualizações...");
-            // Recarrega silenciosamente as listas
             try {
                 const [resAutores, resArtistas] = await Promise.all([
                     fetch(`${VERCEL_URL}/autores`),
@@ -136,8 +134,15 @@ document.addEventListener('DOMContentLoaded', async () => {
                 const dadosAutores = await resAutores.json();
                 const dadosArtistas = await resArtistas.json();
 
-                if (Array.isArray(dadosAutores)) listaAutores = dadosAutores;
-                if (Array.isArray(dadosArtistas)) listaArtistas = dadosArtistas;
+                // Atualiza as variáveis globais
+                if (Array.isArray(dadosAutores)) {
+                    listaAutores = dadosAutores;
+                    console.log("Autores atualizados:", listaAutores.length);
+                }
+                if (Array.isArray(dadosArtistas)) {
+                    listaArtistas = dadosArtistas;
+                    console.log("Artistas atualizados:", listaArtistas.length);
+                }
             } catch (e) {
                 console.error("Falha no auto-update", e);
             }
@@ -163,7 +168,6 @@ async function carregarAutores(seletor) {
     }
 }
 
-// NOVO: Função para carregar Artistas
 async function carregarArtistas() {
     try {
         const response = await fetch(`${VERCEL_URL}/artistas`);
@@ -190,7 +194,6 @@ async function carregarDadosEdicao(tipo, id, config) {
             if (campo.type === 'volumes-list') return preencherVolumes(campo.id, item[campo.id]);
             if (campo.type === 'faixas-list') return preencherFaixas(campo.id, item[campo.id]);
             if (campo.type === 'autor-search') return preencherAutoresSearch(campo, item);
-            // NOVO: Preencher artista
             if (campo.type === 'artista-search') return preencherArtistasSearch(campo, item);
 
             if (element) {
@@ -244,7 +247,6 @@ function gerarHTMLCampo(campo) {
                 <ul id="lista-${campo.id}" class="hidden absolute w-full bg-white border border-gray-300 rounded-b-lg shadow-2xl max-h-60 overflow-y-auto z-50 mt-1"></ul>
             `;
         
-        // NOVO: Campo para Artista (similar ao autor, mas linka para artistas)
         case 'artista-search':
             return `
                 <div class="flex justify-between items-center mb-1">
@@ -301,7 +303,6 @@ function configurarLogicaCampo(campo) {
     if (campo.type === 'autor-search') {
         window[`setupAuth_${campo.id}`] = configurarAutorSearch(campo);
     } 
-    // NOVO: Configuração para Artista
     else if (campo.type === 'artista-search') {
         window[`setupArtist_${campo.id}`] = configurarArtistaSearch(campo);
     }
@@ -317,7 +318,8 @@ function configurarLogicaCampo(campo) {
 
 // --- LÓGICA DE BUSCA (AUTOR e ARTISTA) ---
 
-function configurarSearchGenerico(campo, listaDados, setupKey) {
+// CORREÇÃO: Aceita uma função (getListaDados) em vez do array direto
+function configurarSearchGenerico(campo, getListaDados) { 
     const inputVisual = document.getElementById(`${campo.id}-visual`);
     const inputOculto = document.getElementById(campo.id);
     const listaUl = document.getElementById(`lista-${campo.id}`);
@@ -358,7 +360,10 @@ function configurarSearchGenerico(campo, listaDados, setupKey) {
         listaUl.innerHTML = '';
         const termo = texto.toLowerCase();
         
-        const filtrados = listaDados.filter(item => 
+        // CORREÇÃO: Chama a função para obter a lista ATUALIZADA
+        const listaAtual = getListaDados(); 
+        
+        const filtrados = listaAtual.filter(item => 
             item.nome.toLowerCase().includes(termo) && 
             !selecionados.some(sel => sel.id === item._id)
         );
@@ -400,13 +405,14 @@ function configurarSearchGenerico(campo, listaDados, setupKey) {
     return { setSelecionados };
 }
 
-// Wrappers para usar a função genérica com as listas corretas
+// CORREÇÃO: Passa uma função anônima que retorna a variável global
 function configurarAutorSearch(campo) {
-    return configurarSearchGenerico(campo, listaAutores);
+    return configurarSearchGenerico(campo, () => listaAutores);
 }
 
+// CORREÇÃO: Passa uma função anônima que retorna a variável global
 function configurarArtistaSearch(campo) {
-    return configurarSearchGenerico(campo, listaArtistas);
+    return configurarSearchGenerico(campo, () => listaArtistas);
 }
 
 function preencherAutoresSearch(campo, item) {
