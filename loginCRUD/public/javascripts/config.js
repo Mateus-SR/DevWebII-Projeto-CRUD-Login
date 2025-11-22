@@ -1,5 +1,7 @@
 const VERCEL_URL = "https://dev-web-ii-projeto-crud-login.vercel.app";
 
+// Funções mais básicas para interagir com o jwt_token
+
 function getTokenJWT() {
     return localStorage.getItem('jwt_token');
 }
@@ -20,6 +22,7 @@ function checkAuth() {
     }
 }
 
+// Função especial, pois precisamos verificar antes se estamos mesmo autenticados para criar algo
 async function criarItem(endpoint, dados) {
     const token = getTokenJWT();
     if (!token) return { erro: "Sem token" };

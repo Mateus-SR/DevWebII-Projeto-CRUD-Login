@@ -8,6 +8,7 @@ const opts = {
     secretOrKey: process.env.JWT_SECRET
 };
 
+// Configuração do token para login
 passport.use(new JwtStrategy(opts, async (jwt_payload, done) => {
     try {
         const usuario = await Usuario.findById(jwt_payload.id);

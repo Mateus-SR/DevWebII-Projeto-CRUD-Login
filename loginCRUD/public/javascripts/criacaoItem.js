@@ -4,7 +4,15 @@ let listaArtistas = [];
 let editMode = false;
 let currentId = null;
 
-// Configuração de schemas
+/*######################################
+    Schemas
+
+    Configuração de schemas - estruturas a seguir para o banco de dados aceitar
+    (A criação do formulário foi completamente automatizada por IA, teria sido bem chato configurar na mão todos esses campos)
+
+    Além do banco de dados, o formulário vai usar esse objetão para o preenchimento 
+    
+######################################*/
 const getSchemas = () => ({
     'hqs': {
         endpoint: '/hqs',

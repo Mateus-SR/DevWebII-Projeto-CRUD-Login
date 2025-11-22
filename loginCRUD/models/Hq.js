@@ -1,11 +1,12 @@
+// SCHEMAS - o molde que o banco de dados vai usar para criar novas entradas
 const mongoose = require('mongoose');
 const Schema = mongoose.Schema;
 
 const hqSchema = new Schema ({
     nome: { type: String, required: true },
-    nomeAlt: [String],
+    nomeAlt: [String], // um array simples, varios itens podem estar aqui
     tipo: { type: String, required: true },
-    genero: [String],
+    genero: [String], // um array simples, varios itens podem estar aqui
     volumes: [{ 
         titulo: { type: String },
         tituloAlt: { type: String },
@@ -15,9 +16,11 @@ const hqSchema = new Schema ({
 
     volumeTotal: { type: Number, default: 0 },
 
+    // Configurando aqui também a relação dessa coleção com a outra
     autores: [{ type: Schema.Types.ObjectId, ref: 'Autor', required: true }],
-    urlFoto: { type: String },
-    ativo: { type: Boolean, default: true }
+
+    urlFoto: { type: String }, // aqui vai o link do Cloudinary
+    ativo: { type: Boolean, default: true } // como boa pratica, não vou deletar do banco de dados, mas esconder essa entrada
 });
 
 hqSchema.pre('save', function(next) {

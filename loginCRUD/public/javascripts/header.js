@@ -1,5 +1,5 @@
 document.addEventListener('DOMContentLoaded', () => {
-    // ... (código do botão conta permanece igual) ...
+    // Configurando os botões que devem aparecer somente logado/deslogado
     const botaoConta = document?.getElementById('botaoConta');
     if (botaoConta) {
         const jwt_token = getTokenJWT();
@@ -25,23 +25,23 @@ document.addEventListener('DOMContentLoaded', () => {
     // Toggle do Menu Principal
     divDropdown?.addEventListener('click', (e) => {
         // Apenas fecha/abre se clicar no botão principal ou no container vazio, 
-        // não se clicar nos botões internos (gerenciado abaixo)
+        // não se clicar nos botões internos (abaixo)
         if (e.target.closest('button') === divDropdown.querySelector('button')) {
             linksDropdown.classList.toggle("hidden");
         }
     });
 
     // Função para controlar os sub-menus
-    function toggleSubMenu(btnId, listId, iconId) {
-        const btn = document.getElementById(btnId);
-        const list = document.getElementById(listId);
-        const icon = document.getElementById(iconId);
+    function toggleSubMenu(botaoId, listaId, iconeId) {
+        const botao = document.getElementById(botaoId);
+        const lista = document.getElementById(listaId);
+        const icone = document.getElementById(iconeId);
 
-        if (btn) {
-            btn.addEventListener('click', (e) => {
+        if (botao) {
+            botao.addEventListener('click', (e) => {
                 e.stopPropagation(); // Impede que o clique feche o menu principal
-                list.classList.toggle('hidden');
-                if (icon) icon.classList.toggle('rotate-180');
+                lista.classList.toggle('hidden');
+                if (icone) icone.classList.toggle('rotate-180');
             });
         }
     }
