@@ -118,16 +118,22 @@ document.addEventListener('DOMContentLoaded', async () => {
                     e.stopPropagation();
                     if(confirm("Deseja mesmo excluir esse item?\nEssa ação não pode ser desfeita."))
                         try {
-                            await fetch(`${VERCEL_URL}${config.endpoint}/${item.id}`, {
+                            await fetch(`${VERCEL_URL}${config.endpoint}/${item._id}`, {
                                 method: 'DELETE',
-                                headers: { 'Authorization': `Bearer ${token}` }
+                                headers: { 'Authorization': `Bearer ${estaLogado}` }
                             });
-                            alert(`Item ${item.id} removido.`);
+                            if (!response.ok) {
+                                const erro = await response.json();
+                                throw new Error(erro.message || 'Falha ao excluir');
+                            }
+
+                            alert(`Item removido com sucesso.`);
                             window.location.reload();
                         } catch (error) {
-                            alert(`Ocorreu um erro ao remover o item ${item.id}`);
+                            console.error(error);
+                            alert(`Ocorreu um erro ao remover o item: ${error.message}`);
                         };
-                };
+                    }
 
                 divBotoes.appendChild(botaoEditar);
                 divBotoes.appendChild(botaoExcluir);

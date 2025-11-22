@@ -51,7 +51,7 @@ router.post('/', authenticate, upload.single('imagem'), async (req, res) => {
 // 5.2: GET (Listar) - Público
 router.get('/', async (req, res) => {
     try {
-        const dvds = await Dvd.find().populate('autor');
+        const dvds = await Dvd.find({ ativo: true }).populate('autor');
         res.json(dvds);
     } catch (error) {
         res.status(500).json({ error: error.message });

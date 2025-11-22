@@ -51,7 +51,7 @@ router.post('/', authenticate, upload.single('imagem'), async (req, res) => {
 // 5.2: GET (Listar) - Público
 router.get('/', async (req, res) => {
     try {
-        const hqs = await Hq.find().populate('autores');
+        const hqs = await Hq.find({ ativo: true }).populate('autores');
         res.json(hqs);
     } catch (error) {
         res.status(500).json({ error: error.message });

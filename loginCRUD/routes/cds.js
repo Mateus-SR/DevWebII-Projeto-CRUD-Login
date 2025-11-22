@@ -51,7 +51,7 @@ router.post('/', authenticate, upload.single('imagem'), async (req, res) => {
 // 5.2: GET (Listar) - Público
 router.get('/', async (req, res) => {
     try {
-        const cds = await Cd.find().populate('autor');
+        const cds = await Cd.find({ ativo: true }).populate('autor');
         res.json(cds);
     } catch (error) {
         res.status(500).json({ error: error.message });

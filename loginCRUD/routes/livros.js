@@ -51,7 +51,7 @@ router.post('/', authenticate, upload.single('imagem'), async (req, res) => {
 // 5.2: GET (Listar) - Público
 router.get('/', async (req, res) => {
     try {
-        const livros = await Livro.find().populate('autores');
+        const livros = await Livro.find({ ativo: true }).populate('autores');
         res.json(livros);
     } catch (error) {
         res.status(500).json({ error: error.message });
