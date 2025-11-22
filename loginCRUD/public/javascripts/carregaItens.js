@@ -13,7 +13,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     // 1. Cria link para a visualização do Autor (autores.html?id=...)
     const formatarAutorLink = (autorOuLista) => {
         if (!autorOuLista) return 'Desconhecido';
-        
+
         // Mudança: aponta para autores.html com ID, em vez de criacaoItem.html
         const criarLink = (a) => `<a href="../views/autores.html?id=${a._id}" class="underline underline-offset-1 hover:text-teal-500 hover:font-bold transition-all">${a.nome}</a>`;
 
@@ -26,7 +26,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     const formatarArtistaLink = (artistaOuLista) => {
         if (!artistaOuLista) return 'Desconhecido';
-        
+
         // Mudança: aponta para autores.html com ID, em vez de criacaoItem.html
         const criarLink = (a) => `<a href="../views/artista.html?id=${a._id}" class="underline underline-offset-1 hover:text-teal-500 hover:font-bold transition-all">${a.nome}</a>`;
 
@@ -40,9 +40,9 @@ document.addEventListener('DOMContentLoaded', async () => {
     // 2. Cria link para as Obras do Autor (livros.html?id=...)
     const formatarObraLink = (lista, nomeTipo, paginaHtml) => {
         if (!lista || lista.length === 0) return [];
-        
+
         // Gera: <a href="...">Titulo</a> (Tipo)
-        return lista.map(obra => 
+        return lista.map(obra =>
             `<li>
                 <a href="../views/${paginaHtml}?id=${obra._id}" class="underline underline-offset-1 hover:text-teal-500 hover:font-bold transition-all">
                     ${obra.nome || obra.titulo}
@@ -55,10 +55,10 @@ document.addEventListener('DOMContentLoaded', async () => {
     // 3. Formata listas genéricas (Volumes/Faixas) com scroll
     const formatarListaDetalhes = (lista, tituloLista) => {
         if (!lista || lista.length === 0) return '';
-        
+
         let html = `<div class="mt-2 p-2 bg-teal-800/30 rounded max-h-32 overflow-y-auto text-sm border border-teal-600/30">`;
         html += `<p class="font-bold text-xs uppercase mb-1 opacity-70">${tituloLista}:</p><ul class="list-disc pl-4 space-y-1">`;
-        
+
         lista.forEach((item, index) => {
             let texto = '';
             if (tituloLista === 'Volumes') {
@@ -68,7 +68,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             }
             html += `<li>${texto}</li>`;
         });
-        
+
         html += `</ul></div>`;
         return html;
     };
@@ -91,10 +91,14 @@ document.addEventListener('DOMContentLoaded', async () => {
             },
             getTitulo: (item) => item.nome,
             getTituloAlt: (item) => {
-                 if (!item.nomeAlt || item.nomeAlt.length === 0) return '';
-                 const nomesLimpos = item.nomeAlt.flatMap(nome => {
+                if (!item.nomeAlt || item.nomeAlt.length === 0) return '';
+                const nomesLimpos = item.nomeAlt.flatMap(nome => {
                     if (typeof nome === 'string' && nome.trim().startsWith('[') && nome.trim().endsWith(']')) {
-                        try { return JSON.parse(nome); } catch (e) { return nome; }
+                        try {
+                            return JSON.parse(nome);
+                        } catch (e) {
+                            return nome;
+                        }
                     }
                     return nome;
                 });
@@ -139,12 +143,32 @@ document.addEventListener('DOMContentLoaded', async () => {
         'autores': {
             endpoint: '/autores',
             getDescricao: (item) => {
-                // Coleta e formata todas as obras com links
                 let linksObras = [];
                 
                 // Usa a função auxiliar para cada tipo de obra populada
                 linksObras.push(...formatarObraLink(item.livros, 'Livro', 'livros.html'));
                 linksObras.push(...formatarObraLink(item.hqs, 'HQ', 'hqs.html'));
+                linksObras.push(...formatarObraLink(item.dvds, 'DVD', 'dvds.html'));
+
+                const listaHtml = linksObras.length > 0 
+                    ? `<div class="mt-2 p-2 bg-teal-800/30 rounded max-h-40 overflow-y-auto text-sm border border-teal-600/30">
+                         <ul class="list-disc pl-4 space-y-1">${linksObras.join('')}</ul>
+                       </div>`
+                    : '<span class="italic opacity-70">Nenhuma obra cadastrada.</span>';
+
+                return `<strong>Nacionalidade:</strong> ${item.nacionalidade || 'N/A'}<br>
+                        <strong>Obras:</strong><br> ${listaHtml}`;
+            },
+            getTitulo: (item) => item.nome
+        }, // Vírgula importante aqui
+        
+        // --- AQUI ESTAVA O ERRO: Adicionando a chave 'artistas' ---
+        'artistas': { 
+            endpoint: '/artistas', // Note que mudei o endpoint para /artistas, assumindo que você criou essa rota
+            getDescricao: (item) => {
+                let linksObras = [];
+                
+                // Artistas/Bandas geralmente têm CDs (e talvez DVDs)
                 linksObras.push(...formatarObraLink(item.cds, 'CD', 'cds.html'));
                 linksObras.push(...formatarObraLink(item.dvds, 'DVD', 'dvds.html'));
 
@@ -158,28 +182,11 @@ document.addEventListener('DOMContentLoaded', async () => {
                         <strong>Obras:</strong><br> ${listaHtml}`;
             },
             getTitulo: (item) => item.nome
-        },
-            endpoint: '/autores',
-            getDescricao: (item) => {
-                // Coleta e formata todas as obras com links
-                let linksObras = [];
-                
-                linksObras.push(...formatarObraLink(item.cds, 'CD', 'cds.html'));
-
-                const listaHtml = linksObras.length > 0 
-                    ? `<div class="mt-2 p-2 bg-teal-800/30 rounded max-h-40 overflow-y-auto text-sm border border-teal-600/30">
-                         <ul class="list-disc pl-4 space-y-1">${linksObras.join('')}</ul>
-                       </div>`
-                    : '<span class="italic opacity-70">Nenhuma obra cadastrada.</span>';
-
-                return `<strong>Nacionalidade:</strong> ${item.nacionalidade || 'N/A'}<br>
-                        <strong>Obras:</strong><br> ${listaHtml}`;
-            },
-            getTitulo: (item) => item.nome
+        }
     };
 
     const config = configuracoes[tipoPagina]
-    if(!config) {
+    if (!config) {
         console.warn("Tipo de página desconhecido:", tipoPagina)
         return;
     }
@@ -188,9 +195,9 @@ document.addEventListener('DOMContentLoaded', async () => {
         // --- NOVA LÓGICA DE FETCH (ID ou Todos) ---
         const urlParams = new URLSearchParams(window.location.search);
         const paramId = urlParams.get('id');
-        
+
         let url = `${VERCEL_URL}${config.endpoint}`;
-        
+
         // Se tiver ID na URL, busca só aquele item específico (Rota GET /:id)
         if (paramId) {
             url += `/${paramId}`;
@@ -258,15 +265,17 @@ document.addEventListener('DOMContentLoaded', async () => {
 
                 botaoExcluir.onclick = async (e) => {
                     e.stopPropagation();
-                    if(confirm("Deseja mesmo excluir esse item?\nEssa ação não pode ser desfeita."))
+                    if (confirm("Deseja mesmo excluir esse item?\nEssa ação não pode ser desfeita."))
                         try {
                             await fetch(`${VERCEL_URL}${config.endpoint}/${item._id}`, {
                                 method: 'DELETE',
-                                headers: { 'Authorization': `Bearer ${estaLogado}` }
+                                headers: {
+                                    'Authorization': `Bearer ${estaLogado}`
+                                }
                             });
                             if (!response.ok) {
                                 // Tenta ler erro da API, se houver
-                                const erro = await response.json().catch(() => ({})); 
+                                const erro = await response.json().catch(() => ({}));
                                 throw new Error(erro.message || 'Falha ao excluir');
                             }
 
@@ -281,7 +290,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                             console.error(error);
                             alert(`Ocorreu um erro ao remover o item: ${error.message}`);
                         };
-                    }
+                }
 
                 divBotoes.appendChild(botaoEditar);
                 divBotoes.appendChild(botaoExcluir);
