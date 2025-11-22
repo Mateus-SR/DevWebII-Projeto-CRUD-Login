@@ -51,7 +51,7 @@ router.post('/', authenticate, upload.single('imagem'), async (req, res) => {
 // 5.2: GET (Listar) - Público
 router.get('/', async (req, res) => {
     try {
-        const cds = await Cd.find({ ativo: true }).populate('autor');
+        const cds = await Cd.find({ ativo: true }).populate('artista');
         res.json(cds);
     } catch (error) {
         res.status(500).json({ error: error.message });
@@ -61,7 +61,7 @@ router.get('/', async (req, res) => {
 // 5.2: GET (Buscar por ID) - Público
 router.get('/:id', async (req, res) => {
     try {
-        const cd = await Cd.findById(req.params.id).populate('autor');
+        const cd = await Cd.findById(req.params.id).populate('artista');
         if (!cd) return res.status(404).json({ message: 'Cd não encontrado' });
         res.json(cd);
     } catch (error) {
