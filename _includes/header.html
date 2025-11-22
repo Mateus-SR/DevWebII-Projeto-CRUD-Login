@@ -2,33 +2,45 @@
             md:grid md:grid-cols-5 md:place-items-center">
 
     <div class="col-span-1 p-2.5 h-full flex items-center justify-start hover:bg-teal-400 transition-all duration-300 cursor-pointer hover:animate-bump">
-        <img class="max-h-18 animate-FadeInOut logo" src="../public/images/SEBOSO simples.png" alt="Seboso - O melhor dentre os piores sebos de São Paulo">
+        <img class="max-h-18 animate-FadeInOut logo" src="../public/images/SEBOSO simples.png"
+            alt="Seboso - O melhor dentre os piores sebos de São Paulo">
     </div>
 
-    <div class="col-span-3 md:flex items-center justify-center hidden md:visible h-full">
-        
-        <a href="livros.html" class="flex items-center justify-center h-full p-5 hover:bg-teal-400 transition-all duration-300 hover:animate-bump">
-            Livros
-        </a>
+    <div class="z-50 relative col-span-3 flex items-center justify-center h-full w-72" id="divDropdown">
+        <button class="h-full p-5 w-full hover:bg-teal-400 transition-all duration-300 cursor-pointer flex items-center justify-center gap-2 hover:animate-bump">
+            Navegar <i class="fa fa-caret-down"></i>
+        </button>
 
-        <a href="hqs.html" class="flex items-center justify-center h-full p-5 hover:bg-teal-400 transition-all duration-300 hover:animate-bump">
-            HQs e Mangás
-        </a>
+        <div class="hidden absolute w-full top-full left-0 overflow-hidden bg-teal-500/40 backdrop-blur-sm shadow-xl flex-col" id="linksDropdown">
 
-        <a href="cds.html" class="flex items-center justify-center h-full p-5 hover:bg-teal-400 transition-all duration-300 hover:animate-bump">
-            CDs
-        </a>
+            <div class="w-full border-b border-teal-400/30">
+                <button id="btnProdutos" class="w-full flex items-center justify-center p-5 hover:bg-teal-400 transition-all duration-300 hover:animate-bump text-xl font-vend-sans text-white text-shadow-lg/20 font-bold cursor-pointer">
+                    Produtos <i class="fa fa-chevron-down ml-2 text-sm transition-transform duration-300" id="iconProdutos"></i>
+                </button>
+                
+                <div id="listProdutos" class="hidden bg-teal-900/40 w-full flex-col">
+                    <a href="livros.html" class="block w-full py-3 hover:bg-teal-400 transition-all duration-300 hover:animate-bump">Livros</a>
+                    <a href="hqs.html" class="block w-full py-3 hover:bg-teal-400 transition-all duration-300 hover:animate-bump">HQs e Mangás</a>
+                    <a href="cds.html" class="block w-full py-3 hover:bg-teal-400 transition-all duration-300 hover:animate-bump">CDs</a>
+                    <a href="dvds.html" class="block w-full py-3 hover:bg-teal-400 transition-all duration-300 hover:animate-bump">DVDs</a>
+                </div>
+            </div>
 
-        <a href="dvds.html" class="flex items-center justify-center h-full p-5 hover:bg-teal-400 transition-all duration-300 hover:animate-bump">
-            DVDs
-        </a>
+            <div class="w-full">
+                <button id="btnCriadores" class="w-full flex items-center justify-center p-5 hover:bg-teal-400 transition-all duration-300 hover:animate-bump text-xl font-vend-sans text-white text-shadow-lg/20 font-bold cursor-pointer">
+                    Criadores <i class="fa fa-chevron-down ml-2 text-sm transition-transform duration-300" id="iconCriadores"></i>
+                </button>
+                
+                <div id="listCriadores" class="hidden bg-teal-900/40 w-full flex-col">
+                    <a href="autores.html" class="block w-full py-3 hover:bg-teal-400 transition-all duration-300 hover:animate-bump">Autores</a>
+                    <a href="autores.html" class="block w-full py-3 hover:bg-teal-400 transition-all duration-300 hover:animate-bump">Artistas e Bandas</a>
+                </div>
+            </div>
 
-        <a href="autores.html" class="flex items-center justify-center h-full p-5 hover:bg-teal-400 transition-all duration-300 hover:animate-bump">
-            Autores
-        </a>
+        </div>
     </div>
 
     <div id="botaoConta" href="#" class="col-span-1 h-full flex flex-row items-center justify-center gap-2">
-            [Placeholder text]
+        [Placeholder text]
     </div>
 </header>

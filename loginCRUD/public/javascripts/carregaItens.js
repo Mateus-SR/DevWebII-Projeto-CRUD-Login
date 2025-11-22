@@ -8,50 +8,120 @@ document.addEventListener('DOMContentLoaded', async () => {
     if (!container) return;
     const tipoPagina = container.getAttribute('tipoData');
 
+    // --- Funções Auxiliares de Formatação ---
+
+    // Cria um link para a página de edição/visualização do autor
+    const formatarAutorLink = (autorOuLista) => {
+        if (!autorOuLista) return 'Desconhecido';
+        
+        const criarLink = (a) => `<a href="../views/autores.html?tipo=autores&id=${a._id}" class="underline underline-offset-1 hover:text-teal-500 hover:font-bold transition-all">${a.nome}</a>`;
+
+        if (Array.isArray(autorOuLista)) {
+            if (autorOuLista.length === 0) return 'Desconhecido';
+            return autorOuLista.map(criarLink).join(', ');
+        }
+        return criarLink(autorOuLista);
+    };
+
+    // Cria uma lista visual para Volumes e Faixas com rolagem
+    const formatarLista = (lista, tipo) => {
+        if (!lista || lista.length === 0) return '';
+        
+        let html = `<div class="mt-2 p-2 bg-teal-800/30 rounded max-h-32 overflow-y-auto text-sm border border-teal-600/30">`;
+        html += `<p class="font-bold text-xs uppercase mb-1 opacity-70">${tipo}:</p><ul class="list-disc pl-4 space-y-1">`;
+        
+        lista.forEach((item, index) => {
+            let texto = '';
+            if (tipo === 'Volumes') {
+                texto = `Vol. ${item.volume}: ${item.titulo || ''} ${!item.emEstoque ? '(Sem Estoque)' : ''}`;
+            } else if (tipo === 'Faixas') {
+                texto = `${index + 1}. ${item.titulo} <span class="opacity-60 text-xs">(${item.duracao || '--:--'})</span>`;
+            }
+            html += `<li>${texto}</li>`;
+        });
+        
+        html += `</ul></div>`;
+        return html;
+    };
+
+    // --- Configurações ---
+
     const configuracoes = {
-        'hqs': { // para fazer: adicionar os demais campos do banco de dados
+        'hqs': {
             endpoint: '/hqs',
-            getDescricao: (item) => `Tipo: ${item.tipo}\nGênero: ${item.genero ? item.genero.join(', ') : 'N/A'}`,
+            getDescricao: (item) => {
+                const generos = item.genero && item.genero.length > 0 ? item.genero.join(', ') : 'N/A';
+                const linksAutores = formatarAutorLink(item.autores);
+                const listaVolumes = formatarLista(item.volumes, 'Volumes');
+
+                return `<strong>Tipo:</strong> ${item.tipo}<br>
+                        <strong>Gênero:</strong> ${generos}<br>
+                        <strong>Autores:</strong> ${linksAutores}<br>
+                        <strong>Total:</strong> ${item.volumeTotal || 0} volumes
+                        ${listaVolumes}`;
+            },
             getTitulo: (item) => item.nome,
             getTituloAlt: (item) => {
-                if (!item.nomeAlt || item.nomeAlt.length === 0) return '';
-
-                // Essa parte serve para "limpar" o array de nomes alternativos, porque na hora de exibir, ele não reconhecia como varios nomes, daí tudo ficava junto
-                // flatMap() aqui funciona de forma parecida com o map(), mas ele limpa o array de valores nulos e garante que tudo aqui é um unico array, só então roda a função pra cada um dos itens que sobram (resumindo: nulos são descartados, varios arrays se tornam só um)
-                const nomesLimpos = item.nomeAlt.flatMap(nome => {
-                    // A lógica aqui é: se o nome que recebemos for mesmo uma string, tirando os espaços no começo e no fim, e começar com [ ou ], então transformamos em um array válido para ser lido como json
+                 if (!item.nomeAlt || item.nomeAlt.length === 0) return '';
+                 const nomesLimpos = item.nomeAlt.flatMap(nome => {
                     if (typeof nome === 'string' && nome.trim().startsWith('[') && nome.trim().endsWith(']')) {
-                        try {
-                            return JSON.parse(nome); // Transforma a string '["A","B"]' no array ["A","B"]
-                        } catch (e) {
-                            return nome; // Se falhar, pode mandar do jeito que está
-                        }
+                        try { return JSON.parse(nome); } catch (e) { return nome; }
                     }
                     return nome;
-// https://www.reddit.com/r/swift/comments/6pomr8/trying_to_wrap_my_head_around_map_vs_flat_mapand link util
                 });
-
                 return nomesLimpos.join('\n');
             }
         },
         'livros': {
             endpoint: '/livros',
-            getDescricao: (item) => `Ano: ${item.ano}\nGênero: ${item.genero ? item.genero.join(', ') : 'N/A'}`,
+            getDescricao: (item) => {
+                const generos = item.genero && item.genero.length > 0 ? item.genero.join(', ') : 'N/A';
+                const linksAutores = formatarAutorLink(item.autores);
+
+                return `<strong>Ano:</strong> ${item.ano || 'N/A'}<br>
+                        <strong>Gênero:</strong> ${generos}<br>
+                        <strong>Autores:</strong> ${linksAutores}`;
+            },
             getTitulo: (item) => item.nome
         },
         'cds': {
             endpoint: '/cds',
-            getDescricao: (item) => `Ano: ${item.ano}\nTotal de faixas: ${item.faixasTotal || 0}`,
+            getDescricao: (item) => {
+                const linkAutor = formatarAutorLink(item.autor);
+                const listaFaixas = formatarLista(item.faixas, 'Faixas');
+
+                return `<strong>Artista:</strong> ${linkAutor}<br>
+                        <strong>Ano:</strong> ${item.ano || 'N/A'}<br>
+                        <strong>Total de faixas:</strong> ${item.faixasTotal || 0}
+                        ${listaFaixas}`;
+            },
             getTitulo: (item) => item.titulo
         },
         'dvds': {
             endpoint: '/dvds',
-            getDescricao: (item) => `Duração: ${item.duracao} min\nAno: ${item.ano}`,
+            getDescricao: (item) => {
+                const linkDiretor = formatarAutorLink(item.autor);
+                return `<strong>Diretor:</strong> ${linkDiretor}<br>
+                        <strong>Duração:</strong> ${item.duracao} min<br>
+                        <strong>Ano:</strong> ${item.ano}`;
+            },
             getTitulo: (item) => item.nome
         },
         'autores': {
             endpoint: '/autores',
-            getDescricao: (item) => `Nacionalidade: ${item.nacionalidade}`,
+            getDescricao: (item) => {
+                // Agrega todas as obras encontradas
+                let obras = [];
+                if (item.livros && item.livros.length) obras.push(`${item.livros.length} Livros`);
+                if (item.hqs && item.hqs.length) obras.push(`${item.hqs.length} HQs`);
+                if (item.cds && item.cds.length) obras.push(`${item.cds.length} CDs`);
+                if (item.dvds && item.dvds.length) obras.push(`${item.dvds.length} DVDs`);
+
+                const resumoObras = obras.length > 0 ? obras.join(', ') : 'Nenhuma obra cadastrada';
+
+                return `<strong>Nacionalidade:</strong> ${item.nacionalidade || 'N/A'}<br>
+                        <strong>Obras no acervo:</strong><br> ${resumoObras}`;
+            },
             getTitulo: (item) => item.nome
         }
     };
@@ -80,14 +150,14 @@ document.addEventListener('DOMContentLoaded', async () => {
 
             if (config.getTituloAlt) {
                 const alt = config.getTituloAlt(item);
-                if (alt) {
-                    tituloAlt.textContent = config.getTituloAlt(item);
-                }
+                if (alt) tituloAlt.textContent = alt;
             } else {
                 tituloAlt.remove();
             }
 
-            descricao.textContent = config.getDescricao(item);
+            // --- MUDANÇA PRINCIPAL AQUI: innerHTML para renderizar HTML ---
+            descricao.innerHTML = config.getDescricao(item);
+            // -------------------------------------------------------------
 
             if (item.urlFoto) {
                 img.src = item.urlFoto;
@@ -107,6 +177,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
                 botaoEditar.onclick = (e) => {
                     e.stopPropagation();
+                    // O link do autor também usa essa mesma estrutura de URL
                     window.location.href = `../views/criacaoItem.html?tipo=${tipoPagina}&id=${item._id}`;
                 };
 
@@ -140,14 +211,14 @@ document.addEventListener('DOMContentLoaded', async () => {
                 templateClone.querySelector('.relative').appendChild(divBotoes);
             };
 
-
             container.appendChild(templateClone)
         });
     } catch (error) {
         console.error("Erro ao carregar itens:", error);
-        container.innerHTML = `        <div class="font-comfortaa">
-        <p class="text-teal-800 text-2xl font-extrabold">Erro!</p>
-        <p class="text-black text-md italic">Ocorreu um erro ao carregar os itens.</p>
-    </div>`
+        container.innerHTML = `
+        <div class="font-comfortaa">
+            <p class="text-teal-800 text-2xl font-extrabold">Erro!</p>
+            <p class="text-black text-md italic">Ocorreu um erro ao carregar os itens.</p>
+        </div>`
     }
 });
