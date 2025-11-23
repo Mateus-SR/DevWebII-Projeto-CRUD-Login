@@ -10,23 +10,23 @@ const { uploadStream } = require('../config/cloudinary');
 const storage = multer.memoryStorage();
 const upload = multer({ storage: storage });
 
-// 5.3: POST (Criar) - Protegido
+// POST (Criar) - Protegido (note esse authenticate)
 router.post('/', authenticate, upload.single('imagem'), async (req, res) => {
     try {
-        // 1. "Espalha" todos os campos de texto que vieram (nome, tipo, ano, etc.)
-        // Isso evita ter que digitar um por um!
+        // "Espalha" todos os campos de texto que vieram (nome, tipo, ano, etc.)
         const dados = { ...req.body };
 
-        // 2. Lógica da Imagem (Só adiciona se existir arquivo)
+        // Lógica da Imagem (Só adiciona se existir arquivo, caso não exista, pode passar reto)
         if (req.file) {
             const result = await uploadStream(req.file.buffer);
             dados.urlFoto = result.secure_url;
         }
 
-        // 3. Converter campos "Array" que vieram como JSON String
+        // Converter campos "Array" que vieram como JSON String
         // O front-end manda arrays como string "[...]" via FormData.
         // O Mongoose precisa de Arrays reais. Vamos converter automaticamente:
         const camposArray = ['genero', 'autores', 'volumes', 'faixas', 'nomeAlt']; // Lista de campos que podem ser arrays no seu sistema
+        // o Mongoose so vai usar os que forem necessários
 
         camposArray.forEach(campo => {
             if (dados[campo]) {
@@ -48,7 +48,7 @@ router.post('/', authenticate, upload.single('imagem'), async (req, res) => {
     }
 });
 
-// 5.2: GET (Listar) - Público
+// GET (Listar) - Público
 router.get('/', async (req, res) => {
     try {
         const hqs = await Hq.find({ ativo: true }).populate('autores');
@@ -58,7 +58,8 @@ router.get('/', async (req, res) => {
     }
 });
 
-// 5.2: GET (Buscar por ID) - Público
+// GET (Buscar por ID) - Público (sem authenticate também)
+// (Observação: esse :id é como uma variavel, diz que essa rota (/) vai receber um dado (req.params.id))
 router.get('/:id', async (req, res) => {
     try {
         const hq = await Hq.findById(req.params.id).populate('autores');

@@ -4,7 +4,7 @@ var path = require('path');
 var cookieParser = require('cookie-parser');
 var logger = require('morgan');
 var cors = require('cors');
-
+// Parte desse arquivo foi gerado automaticamente pelo express, já o resto, foi colocado para que o vercel saiba aonde acessar para buscar certas rotas, ou certos modulos
 var indexRouter = require('./routes/index');
 var usersRouter = require('./routes/users');
 var authRouter = require('./routes/auth');
