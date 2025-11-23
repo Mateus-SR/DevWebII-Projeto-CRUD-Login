@@ -1,4 +1,8 @@
 document.addEventListener('DOMContentLoaded', () => {
+    const logo = document.getElementById('logo');
+    logo.onclick = (e) => {
+        window.location.href = 'index.html';
+    }
     // Configurando os botões que devem aparecer somente logado/deslogado
     const botaoConta = document?.getElementById('botaoConta');
     if (botaoConta) {
