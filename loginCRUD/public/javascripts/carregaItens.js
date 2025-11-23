@@ -134,11 +134,17 @@ document.addEventListener('DOMContentLoaded', async () => {
                 const linksAutores = formatarAutorLink(item.autores);
                 const listaVolumes = formatarListaDetalhes(item.volumes, 'Volumes');
 
+                const usuarioAdd = item.adicionadoPor ? item.adicionadoPor.username : 'Desconhecido';
+                const usuarioAlt = item.alteradoPor ? item.alteradoPor.username : 'Desconhecido';
+
                 return `<strong>Tipo:</strong> ${item.tipo}<br>
                         <strong>Gênero:</strong> ${generos}<br>
                         <strong>Autores:</strong> ${linksAutores}<br>
                         <strong>Total:</strong> ${item.volumeTotal || 0} volumes
-                        ${listaVolumes}`;
+                        ${listaVolumes}
+                        <span class="text-md text-gray-800 block mt-2">
+                        Adicionado por: ${usuarioAdd} - Última edição por: ${usuarioAlt}
+                         </span>`;
             },
             getTitulo: (item) => item.nome,
             getTituloAlt: (item) => {
@@ -169,9 +175,15 @@ document.addEventListener('DOMContentLoaded', async () => {
                 const generos = item.genero && item.genero.length > 0 ? item.genero.join(', ') : 'N/A';
                 const linksAutores = formatarAutorLink(item.autores);
 
+                const usuarioAdd = item.adicionadoPor ? item.adicionadoPor.username : 'Desconhecido';
+                const usuarioAlt = item.alteradoPor ? item.alteradoPor.username : 'Desconhecido';                
+
                 return `<strong>Ano:</strong> ${item.ano || 'N/A'}<br>
                         <strong>Gênero:</strong> ${generos}<br>
-                        <strong>Autores:</strong> ${linksAutores}`;
+                        <strong>Autores:</strong> ${linksAutores}
+                        <span class="text-md text-gray-800 block mt-2">
+                        Adicionado por: ${usuarioAdd} - Última edição por: ${usuarioAlt}
+                         </span>`;
             },
             getTitulo: (item) => item.nome
         },
@@ -181,10 +193,16 @@ document.addEventListener('DOMContentLoaded', async () => {
                 const linkArtista = formatarArtistaLink(item.autor);
                 const listaFaixas = formatarListaDetalhes(item.faixas, 'Faixas');
 
+                const usuarioAdd = item.adicionadoPor ? item.adicionadoPor.username : 'Desconhecido';
+                const usuarioAlt = item.alteradoPor ? item.alteradoPor.username : 'Desconhecido';
+
                 return `<strong>Artista:</strong> ${linkArtista}<br>
                         <strong>Ano:</strong> ${item.ano || 'N/A'}<br>
                         <strong>Total de faixas:</strong> ${item.faixasTotal || 0}
-                        ${listaFaixas}`;
+                        ${listaFaixas}
+                        <span class="text-md text-gray-800 block mt-2">
+                        Adicionado por: ${usuarioAdd} - Última edição por: ${usuarioAlt}
+                         </span>`;
             },
             getTitulo: (item) => item.titulo
         },
@@ -192,9 +210,16 @@ document.addEventListener('DOMContentLoaded', async () => {
             endpoint: '/dvds',
             getDescricao: (item) => {
                 const linkDiretor = formatarAutorLink(item.autor);
+
+                const usuarioAdd = item.adicionadoPor ? item.adicionadoPor.username : 'Desconhecido';
+                const usuarioAlt = item.alteradoPor ? item.alteradoPor.username : 'Desconhecido';
+
                 return `<strong>Diretor:</strong> ${linkDiretor}<br>
                         <strong>Duração:</strong> ${item.duracao} min<br>
-                        <strong>Ano:</strong> ${item.ano}`;
+                        <strong>Ano:</strong> ${item.ano}
+                        <span class="text-md text-gray-800 block mt-2">
+                        Adicionado por: ${usuarioAdd} - Última edição por: ${usuarioAlt}
+                         </span>`;
             },
             getTitulo: (item) => item.nome
         },
@@ -211,6 +236,9 @@ document.addEventListener('DOMContentLoaded', async () => {
                 linksObras.push(...formatarObraLink(item.hqs, 'HQ', 'hqs.html'));
                 linksObras.push(...formatarObraLink(item.dvds, 'DVD', 'dvds.html'));
 
+                const usuarioAdd = item.adicionadoPor ? item.adicionadoPor.username : 'Desconhecido';
+                const usuarioAlt = item.alteradoPor ? item.alteradoPor.username : 'Desconhecido';
+
                 /* listaHtml recebe um html especifico dependendo se linksObras estiver vazio ou não
                  (essa é a sintaxe diferente do if, que eu chamo "if de uma linha só":
                     [algo] [condicao] ? [o que fazer se for true] : [o que fazer se for falso])
@@ -222,7 +250,10 @@ document.addEventListener('DOMContentLoaded', async () => {
                     : '<span class="italic opacity-70">Nenhuma obra cadastrada.</span>';
 
                 return `<strong>Nacionalidade:</strong> ${item.nacionalidade || 'N/A'}<br>
-                        <strong>Obras:</strong><br> ${listaHtml}`;
+                        <strong>Obras:</strong><br> ${listaHtml}
+                        <span class="text-md text-gray-800 block mt-2">
+                        Adicionado por: ${usuarioAdd} - Última edição por: ${usuarioAlt}
+                         </span>`;
             },
             getTitulo: (item) => item.nome
         }, 
@@ -232,6 +263,9 @@ document.addEventListener('DOMContentLoaded', async () => {
                 // criamos um array para guardar os links
                 let linksObras = [];
                 
+                const usuarioAdd = item.adicionadoPor ? item.adicionadoPor.username : 'Desconhecido';
+                const usuarioAlt = item.alteradoPor ? item.alteradoPor.username : 'Desconhecido';
+
                 // Passando os dados pra função de formatar la em cima
                 // (como podem ser vários links, usamos "... para quebrar os vários links, e adicionar (push) cada um individualmente no array)
                 // (jogamos todos os itens/links de uma vez na função em uma "caixa", depois abrimos ela e colocamos um a um no array linksObras)
@@ -249,7 +283,10 @@ document.addEventListener('DOMContentLoaded', async () => {
                     : '<span class="italic opacity-70">Nenhuma obra cadastrada.</span>';
 
                 return `<strong>Nacionalidade:</strong> ${item.nacionalidade || 'N/A'}<br>
-                        <strong>Obras:</strong><br> ${listaHtml}`;
+                        <strong>Obras:</strong><br> ${listaHtml}
+                        <span class="text-md text-gray-800 block mt-2">
+                        Adicionado por: ${usuarioAdd} - Última edição por: ${usuarioAlt}
+                         </span>`;
             },
             getTitulo: (item) => item.nome
         }

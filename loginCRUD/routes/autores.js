@@ -40,6 +40,12 @@ router.post('/', authenticate, upload.single('imagem'), async (req, res) => {
             }
         });
 
+        if (req.user) {
+            dados.adicionadoPor = req.user._id;
+            dados.alteradoPor = req.user._id;
+            dados.dataAlteracao = Date.now();
+        }
+
         const autor = new Autor(dados);
         await autor.save();
         res.status(201).json(autor);
@@ -56,7 +62,9 @@ router.get('/', async (req, res) => {
             .populate('livros')
             .populate('cds')
             .populate('dvds')
-            .populate('hqs');
+            .populate('hqs')
+            .populate('adicionadoPor', 'username')
+            .populate('alteradoPor', 'username');;
             
         res.json(autores);
     } catch (error) {
@@ -72,7 +80,9 @@ router.get('/:id', async (req, res) => {
             .populate('livros')
             .populate('cds')
             .populate('dvds')
-            .populate('hqs');
+            .populate('hqs')
+            .populate('adicionadoPor', 'username')
+            .populate('alteradoPor', 'username');;
             
         if (!autor) return res.status(404).json({ message: 'Autor não encontrado' });
         res.json(autor);
@@ -106,6 +116,13 @@ router.put('/:id', authenticate, upload.single('imagem'), async (req, res) => {
                 }
             }
         });
+
+        if (req.user) {
+            dados.alteradoPor = req.user._id;
+            dados.dataAlteracao = Date.now();
+            
+            delete dados.adicionadoPor; 
+        }
 
         // Atualiza no banco
         // "new: true" avisa para o mongoose que queremos a versão atualizada da entrada no banco

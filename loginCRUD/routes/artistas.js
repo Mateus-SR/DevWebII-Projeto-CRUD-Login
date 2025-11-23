@@ -40,6 +40,12 @@ router.post('/', authenticate, upload.single('imagem'), async (req, res) => {
             }
         });
 
+        if (req.user) {
+            dados.adicionadoPor = req.user._id;
+            dados.alteradoPor = req.user._id;
+            dados.dataAlteracao = Date.now();
+        }
+
         const artista = new Artista(dados);
         await artista.save();
         res.status(201).json(artista);
@@ -101,6 +107,13 @@ router.put('/:id', authenticate, upload.single('imagem'), async (req, res) => {
             }
         });
 
+        if (req.user) {
+            dados.alteradoPor = req.user._id;
+            dados.dataAlteracao = Date.now();
+            
+            delete dados.adicionadoPor; 
+        }
+        
         // Atualiza no banco
         // "new: true" avisa para o mongoose que queremos a versão atualizada da entrada no banco
         // "runValidators: true" avisa que queremos seguir as regras estabelecidas la nas models

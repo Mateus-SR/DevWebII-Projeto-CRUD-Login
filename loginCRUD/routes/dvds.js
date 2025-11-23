@@ -40,6 +40,12 @@ router.post('/', authenticate, upload.single('imagem'), async (req, res) => {
             }
         });
 
+        if (req.user) {
+            dados.adicionadoPor = req.user._id;
+            dados.alteradoPor = req.user._id;
+            dados.dataAlteracao = Date.now();
+        }
+
         const dvd = new Dvd(dados);
         await dvd.save();
         res.status(201).json(dvd);
@@ -51,7 +57,9 @@ router.post('/', authenticate, upload.single('imagem'), async (req, res) => {
 // GET (Listar) - Público
 router.get('/', async (req, res) => {
     try {
-        const dvds = await Dvd.find({ ativo: true }).populate('autor');
+        const dvds = await Dvd.find({ ativo: true }).populate('autor')
+        .populate('adicionadoPor', 'username')
+        .populate('alteradoPor', 'username');;
         res.json(dvds);
     } catch (error) {
         res.status(500).json({ error: error.message });
@@ -62,7 +70,9 @@ router.get('/', async (req, res) => {
 // (Observação: esse :id é como uma variavel, diz que essa rota (/) vai receber um dado (req.params.id))
 router.get('/:id', async (req, res) => {
     try {
-        const dvd = await Dvd.findById(req.params.id).populate('autor');
+        const dvd = await Dvd.findById(req.params.id).populate('autor')
+        .populate('adicionadoPor', 'username')
+        .populate('alteradoPor', 'username');;
         if (!dvd) return res.status(404).json({ message: 'Dvd não encontrado' });
         res.json(dvd);
     } catch (error) {
@@ -96,6 +106,13 @@ router.put('/:id', authenticate, upload.single('imagem'), async (req, res) => {
                 }
             }
         });
+
+        if (req.user) {
+            dados.alteradoPor = req.user._id;
+            dados.dataAlteracao = Date.now();
+            
+            delete dados.adicionadoPor; 
+        }
 
         // Atualiza no banco
         // "new: true" avisa para o mongoose que queremos a versão atualizada da entrada no banco

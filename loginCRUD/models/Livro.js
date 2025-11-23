@@ -11,7 +11,18 @@ const livroSchema = new Schema ({
     autores: [{ type: Schema.Types.ObjectId, ref: 'Autor', required: true }],
 
     urlFoto: { type: String }, // aqui vai o link do Cloudinary
-    ativo: { type: Boolean, default: true } // como boa pratica, não vou deletar do banco de dados, mas esconder essa entrada
+    ativo: { type: Boolean, default: true }, // como boa pratica, não vou deletar do banco de dados, mas esconder essa entrada
+
+    adicionadoPor: { 
+        type: Schema.Types.ObjectId, 
+        ref: 'Usuario' // Conecta com o model Usuario
+    },
+    alteradoPor: { 
+        type: Schema.Types.ObjectId, 
+        ref: 'Usuario' 
+    },
+    dataCriacao: { type: Date, default: Date.now },
+    dataAlteracao: { type: Date }
 });
 
 module.exports = mongoose.model('Livro', livroSchema);

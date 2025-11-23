@@ -6,7 +6,18 @@ const autorSchema = new Schema({
     nome: { type: String, required: true },
     nacionalidade: { type: String },
     urlFoto: { type: String }, // aqui vai o link do Cloudinary
-    ativo: { type: Boolean, default: true } // como boa pratica, não vou deletar do banco de dados, mas esconder essa entrada
+    ativo: { type: Boolean, default: true }, // como boa pratica, não vou deletar do banco de dados, mas esconder essa entrada
+
+    adicionadoPor: { 
+        type: Schema.Types.ObjectId, 
+        ref: 'Usuario' // Conecta com o model Usuario
+    },
+    alteradoPor: { 
+        type: Schema.Types.ObjectId, 
+        ref: 'Usuario' 
+    },
+    dataCriacao: { type: Date, default: Date.now },
+    dataAlteracao: { type: Date }
 }, {
     // Aqui, os "campos virtuais" são configurados
     // Campos virtuais são uma especie de dados ficticios, imaginarios, que podemos ter no banco.

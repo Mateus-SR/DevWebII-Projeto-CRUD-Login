@@ -40,6 +40,12 @@ router.post('/', authenticate, upload.single('imagem'), async (req, res) => {
             }
         });
 
+        if (req.user) {
+            dados.adicionadoPor = req.user._id;
+            dados.alteradoPor = req.user._id;
+            dados.dataAlteracao = Date.now();
+        }
+
         const cd = new Cd(dados);
         await cd.save();
         res.status(201).json(cd);
@@ -51,7 +57,9 @@ router.post('/', authenticate, upload.single('imagem'), async (req, res) => {
 // GET (Listar) - Público
 router.get('/', async (req, res) => {
     try {
-        const cds = await Cd.find({ ativo: true }).populate('artista');
+        const cds = await Cd.find({ ativo: true }).populate('artista')
+        .populate('adicionadoPor', 'username')
+        .populate('alteradoPor', 'username');;
         res.json(cds);
     } catch (error) {
         res.status(500).json({ error: error.message });
@@ -62,7 +70,9 @@ router.get('/', async (req, res) => {
 // (Observação: esse :id é como uma variavel, diz que essa rota (/) vai receber um dado (req.params.id))
 router.get('/:id', async (req, res) => {
     try {
-        const cd = await Cd.findById(req.params.id).populate('artista');
+        const cd = await Cd.findById(req.params.id).populate('artista')
+        .populate('adicionadoPor', 'username')
+        .populate('alteradoPor', 'username');;
         if (!cd) return res.status(404).json({ message: 'Cd não encontrado' });
         res.json(cd);
     } catch (error) {
@@ -96,6 +106,13 @@ router.put('/:id', authenticate, upload.single('imagem'), async (req, res) => {
                 }
             }
         });
+
+        if (req.user) {
+            dados.alteradoPor = req.user._id;
+            dados.dataAlteracao = Date.now();
+            
+            delete dados.adicionadoPor; 
+        }
 
         // Atualiza no banco
         // "new: true" avisa para o mongoose que queremos a versão atualizada da entrada no banco

@@ -40,6 +40,12 @@ router.post('/', authenticate, upload.single('imagem'), async (req, res) => {
             }
         });
 
+        if (req.user) {
+            dados.adicionadoPor = req.user._id;
+            dados.alteradoPor = req.user._id;
+            dados.dataAlteracao = Date.now();
+        }
+
         const hq = new Hq(dados);
         await hq.save();
         res.status(201).json(hq);
@@ -51,7 +57,9 @@ router.post('/', authenticate, upload.single('imagem'), async (req, res) => {
 // GET (Listar) - Público
 router.get('/', async (req, res) => {
     try {
-        const hqs = await Hq.find({ ativo: true }).populate('autores');
+        const hqs = await Hq.find({ ativo: true }).populate('autores')
+        .populate('adicionadoPor', 'username')
+        .populate('alteradoPor', 'username');;
         res.json(hqs);
     } catch (error) {
         res.status(500).json({ error: error.message });
@@ -62,7 +70,9 @@ router.get('/', async (req, res) => {
 // (Observação: esse :id é como uma variavel, diz que essa rota (/) vai receber um dado (req.params.id))
 router.get('/:id', async (req, res) => {
     try {
-        const hq = await Hq.findById(req.params.id).populate('autores');
+        const hq = await Hq.findById(req.params.id).populate('autores')
+        .populate('adicionadoPor', 'username')
+        .populate('alteradoPor', 'username');;
         if (!hq) return res.status(404).json({ message: 'Hq não encontrado' });
         res.json(hq);
     } catch (error) {
@@ -96,6 +106,13 @@ router.put('/:id', authenticate, upload.single('imagem'), async (req, res) => {
                 }
             }
         });
+
+        if (req.user) {
+            dados.alteradoPor = req.user._id;
+            dados.dataAlteracao = Date.now();
+            
+            delete dados.adicionadoPor; 
+        }
 
         // Atualiza no banco
         // "new: true" avisa para o mongoose que queremos a versão atualizada da entrada no banco
