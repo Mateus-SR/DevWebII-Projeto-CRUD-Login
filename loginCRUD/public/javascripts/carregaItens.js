@@ -297,7 +297,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
         // ... e em cada um deles, aplicar esse tratamento/formatação
         /* Aqui, estamos configurando o html, com base no <template> que existe em cada pagina. Esse template funciona quase como
-        uma string literal (``), só que mais profissional e menos gambiarra
+        uma template string (``), só que mais profissional e menos gambiarra
 
         Esse <template> acaba copiando e guardando (mas não exibindo) os dados que estão no divItem.html, arquivo do Jekyll.
         É provavelmente a melhor forma de se criar uma página dessas, que precisa do mesmo elemento várias vezes na pagina

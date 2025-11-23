@@ -1,7 +1,9 @@
+// Variáveis globais para o campo de autor/artista/banda, serão preenchidos depois
 let listaAutores = [];
 let listaArtistas = []; 
+
 // Variáveis globais para controle de edição
-let editMode = false;
+let editMode = false; // (talvez chamar de "flag" seria mais apropriado)
 let currentId = null;
 
 /*######################################
@@ -10,7 +12,8 @@ let currentId = null;
     Configuração de schemas - estruturas a seguir para o banco de dados aceitar
     (A criação do formulário foi completamente automatizada por IA, teria sido bem chato configurar na mão todos esses campos)
 
-    Além do banco de dados, o formulário vai usar esse objetão para o preenchimento 
+    Além de base para inserir no banco de dados, o codigo vai usar esse objetão para o a criação dinamica do formulário 
+    (O endpoint aqui tem o mesmo propósito que em carregaItem.js, dê uma olhada na explicação de lá também)
     
 ######################################*/
 const getSchemas = () => ({
@@ -78,8 +81,9 @@ const getSchemas = () => ({
     }
 });
 
-// --- INICIALIZAÇÃO ---
+// INICIALIZAÇÃO (das coisas importantes ao carregar a pagina (DOMContentLoaded))
 document.addEventListener('DOMContentLoaded', async () => {
+    // Nessa página, só podemos entrar se estivermos logados
     const token = localStorage.getItem('jwt_token');
     if (!token) {
         alert("Você precisa estar logado!");
@@ -87,14 +91,16 @@ document.addEventListener('DOMContentLoaded', async () => {
         return;
     }
 
+    // Preparando aonde vamos colocar o formulário
     const seletor = document.getElementById('seletorTipo');
     const form = document.getElementById('formDinamico');
     const container = document.getElementById('camposContainer');
 
-    // 1. Carregar dados iniciais
+    // Carregando dados especiais que precisam estar já carregados (campo autor/artista/banda)
+    // Por ser mais de 1 request, usamos o await Promise.all, pois não apenas precisamos pedir pro navegador (que é um tanto impaciente) esperar receber o dado enviado para prosseguirmos, mas também precisamos avisar que virá mais de 1 dado de uma vez (Promise.all). (Curiosidade: o Promisse.all faz todas as requisições de uma vez (em pararelo), e devolve tudo junto, assim que tudo estiver pronto) 
     await Promise.all([carregarAutores(seletor), carregarArtistas()]);
 
-    // --- Verificar se estamos em modo de edição ---
+    // Como essa página também é usada para editar os itens, verificamos se na url existem os parametros necessários para entrarmos no "modo edição"
     const urlParams = new URLSearchParams(window.location.search);
     const paramId = urlParams.get('id');
     const paramTipo = urlParams.get('tipo');
@@ -106,19 +112,23 @@ document.addEventListener('DOMContentLoaded', async () => {
         document.querySelector('h1').textContent = "Editar Item";
         document.getElementById('botaoSavar').value = "Atualizar item";
 
+        // Marcamos o formulário para selecionar automaticamente o tipo do item a ser editado...
         seletor.value = paramTipo;
+        // ... e impedimos que qualquer outra seleção de tipo seja feita
         seletor.disabled = true;
 
+        // Carregamos as configurações definidas no schema...
         const schemas = getSchemas();
         const config = schemas[paramTipo];
         
+        // ... E populamos os formulário dinamico com as configurações
         if (config) {
             renderizarFormulario(config, container, form);
             await carregarDadosEdicao(paramTipo, paramId, config);
         }
     }
 
-    // 2. Configurar Eventos Principais
+    // Passando pelo if, renderizamos o formulario na tela
     seletor.addEventListener('change', (e) => {
         const schemas = getSchemas();
         const config = schemas[e.target.value];
@@ -127,11 +137,15 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
     });
 
+    // Configurando o que deve acontecer ao enviar (submit) o formulário
     form.addEventListener('submit', (e) => processarEnvio(e, seletor, token));
 
-    // Auto-update ao focar na aba
+    /* Para facilitar as coisas, se você trocar de aba/minimizar a janela, a lista de autores/artistas/bandas será atualizada
+    Isso é feito com o tipo de EventListener "visibilitychange"
+    */
     document.addEventListener("visibilitychange", async () => {
         if (document.visibilityState === 'visible') {
+            // Sendo o documento (pagina) visivel no navegador, após uma mudança visual de estado (troca de aba, janela minimizada, etc)...
             console.log("Verificando atualizações...");
             try {
                 const [resAutores, resArtistas] = await Promise.all([
@@ -142,14 +156,15 @@ document.addEventListener('DOMContentLoaded', async () => {
                 const dadosAutores = await resAutores.json();
                 const dadosArtistas = await resArtistas.json();
 
-                // Atualiza as variáveis globais
+                // ... atualiza os dados a serem exibidos
+                // Dessa forma, não é necessário refazer o preenchimento na página, caso você tenha esquecido de adicionar um autor, por exemplo. Pode apenas clicar no botão para adicionar um novo (que abrirá propositalmente uma nova pagina, em outra aba), e voltando para a pagina, o novo autor adicioanado já estará visivel e pronto para seleção/inserção no banco
                 if (Array.isArray(dadosAutores)) {
                     listaAutores = dadosAutores;
-                    console.log("Autores atualizados:", listaAutores.length);
+                    console.log("Autores atualizados:", listaAutores.length, listaAutores);
                 }
                 if (Array.isArray(dadosArtistas)) {
                     listaArtistas = dadosArtistas;
-                    console.log("Artistas atualizados:", listaArtistas.length);
+                    console.log("Artistas atualizados:", listaArtistas.length, listaAutores);
                 }
             } catch (e) {
                 console.error("Falha no auto-update", e);
@@ -158,10 +173,20 @@ document.addEventListener('DOMContentLoaded', async () => {
     });
 });
 
-// --- FUNÇÕES AUXILIARES ---
+/*######################################
+    Funções
 
+    Fazendo tudo funcionar propriamente
+    (as funções com "async" são as que pedem algo pro vercel/banco de dados.
+    Como o navegador é impaciente, precisamos deixar explicito que isso vai demorar e a resposta não virá de uma vez (async, await), caso contrário, ele iria passar reto, sem nem ter recebido a resposta, e o código quebraria completamente (ele tentaria trabalhar com valores nulos/indefinidos).)
+    
+######################################*/
+
+/* Um GET simples que preenche a variavel global lá do topo
+    (Observação: como chamamos essa função e a de baixo no Promisse.all, não precisamos desse processo de configurar o seletor nas duas. O que ele faz é criar uma proteção, para que o usuario não consiga selecionar qualquer coisa enquanto ela não terminar de carregar os autores)
+ */
 async function carregarAutores(seletor) {
-    if(seletor) seletor.disabled = true;
+    if(seletor) seletor.disabled = true; // Assim que entrar aqui, trava o seletor de tipos, para não correr risco de quebrar algo (disabled = true, ou seja, está desativado)
     
     try {
         const response = await fetch(`${VERCEL_URL}/autores`);
@@ -169,13 +194,15 @@ async function carregarAutores(seletor) {
         
         if (Array.isArray(dados)) {
             listaAutores = dados;
-            if (!editMode && seletor) seletor.disabled = false;
+            if (!editMode && seletor) seletor.disabled = false; // terminando tudo, e tudo ocorrendo bem, pode liberar o seletor (disabled = false, ou seja, está ativo)
         }
     } catch (error) {
         console.error("Erro ao carregar autores:", error);
     }
 }
 
+// Um GET simples que preenche a outra variavel global lá do topo
+// Não precisamos configurar o seletor (ver explicação da função anterior)
 async function carregarArtistas() {
     try {
         const response = await fetch(`${VERCEL_URL}/artistas`);
@@ -188,15 +215,17 @@ async function carregarArtistas() {
         console.error("Erro ao carregar artistas:", error);
     }
 }
-
+// Um GET um pouco mais elaborado, usando as rodas que pedem o id de algo
 async function carregarDadosEdicao(tipo, id, config) {
     try {
         const response = await fetch(`${VERCEL_URL}${config.endpoint}/${id}`);
+        // por exemplo: https://dev-web-ii-projeto-crud-login.vercel.app/hqs/6919f40bdb67cc01c1e59995, que vai retornar a entrada "Jojo's Bizarre Adventure"
         if (!response.ok) throw new Error('Item não encontrado');
-        const item = await response.json();
+        const item = await response.json(); // guardando a resposta que recebemos
 
         config.campos.forEach(campo => {
             const element = document.getElementById(campo.id);
+            // Para cada campo (campo.forEach), faça essas coisas (no caso, rode as funções de popular os campos a serem editados.)
             
             if (campo.type === 'file') return;
             if (campo.type === 'volumes-list') return preencherVolumes(campo.id, item[campo.id]);
@@ -205,6 +234,10 @@ async function carregarDadosEdicao(tipo, id, config) {
             if (campo.type === 'artista-search') return preencherArtistasSearch(campo, item);
 
             if (element) {
+            /* Existindo "elemento" na tela, se ele veio configurado como array e o array é realmente uma lista, separe* os itens por ", ". Caso contrário, coloque item[campo.id] ou então deixe o campo vazio
+
+            *(apenas por modo de dizer, "join" na verade junta cada item do array como string, colocando algo entre eles)
+            */
                 if (campo.transform === 'array' && Array.isArray(item[campo.id])) {
                     element.value = item[campo.id].join(', ');
                 } else {
@@ -220,19 +253,27 @@ async function carregarDadosEdicao(tipo, id, config) {
     }
 }
 
+// Escrever os dados na tela
 function renderizarFormulario(config, container, form) {
-    container.innerHTML = '';
+    container.innerHTML = ''; // Limpa o html do container totalmente, para termos certeza que podemos trabalhar nele sem quaisquer complicações (innerHTML = '', ou seja, transforma o html dentro desse elemento em nada)
     form.classList.remove('hidden');
+    // por padrão, os formulários ficam escondidos. Quando vamos exibir ele, ele já pode aparecer sem problemas (seria um problema ter TODOS na tela ao mesmo tempo, né?)
 
     config.campos.forEach(campo => {
-        const divWrapper = document.createElement('div');
-        divWrapper.className = "relative mb-4";
-        divWrapper.innerHTML = gerarHTMLCampo(campo);
-        container.appendChild(divWrapper);
+        const divWrapper = document.createElement('div'); // Para cada campo, crie uma div, 
+        divWrapper.className = "relative mb-4"; // configure o css dela,
+        divWrapper.innerHTML = gerarHTMLCampo(campo); // preencha com os campos que definimos e configuramos no nosso schema (importante lembrar que qual vai ser o schema em especifico foi determinado por outra função anteriormente)...
+        container.appendChild(divWrapper); // e aplique ela na tela, dentro do container
         setTimeout(() => configurarLogicaCampo(campo), 0);
+        /* Esse setTimeout possui uma aplicação bem importante e interessante aqui:
+            Como estamos criando campos e logo em seguida configurando eles, poderia acontecer do navegador não ter terminado/carregado 100% a criação, e estariamos tentando acessar campos não existentes (ou talvez meio existentes?)
+            
+            Definir o setTimeout para 0 milissegundos é uma forma de deixar explicito ao navegador que essa tarefa deve ser colocada no final da "lista de afazeres", assim que as demais forem concluidas
+        */
     });
 }
 
+// Nome autoexplicativo, serve para gerar determinados campos, baseados em determinadas configurações, conforme necessário (note os usos do "swtich case"!)
 function gerarHTMLCampo(campo) {
     const label = `<label class="block font-vend-sans text-gray-700 mb-1 font-bold text-sm">${campo.label}</label>`;
     const inputBaseClass = "w-full border border-gray-300 p-2.5 rounded-lg font-comfortaa focus:ring-2 focus:ring-teal-400 outline-none";
@@ -307,46 +348,57 @@ function gerarHTMLCampo(campo) {
     }
 }
 
+/* Aqui é usada uma sintaxe estranha e curiosa para a criação dinamica de variaveis globais:
+    window é um objeto global do javascript/navegador, e é como se estivessemos usando ele como caixa para guardar essa variavel, para depois usar ela em outros lugares (ja que window é global, podemos, apesar de meio gambiarra).
+    O que está entre colchetes acaba se tornando o nome dessa variavel. Acontece que [`setupAutor_${campo.id}] vai ser traduzido no nome do campo a ser configurado, logo, setupAutor_autores ou setupAutor_autor.
+    E importante notar: como qualquer variavel, ela recebe um valor, aqui, o valor vindo das funções de configuração
+*/
 function configurarLogicaCampo(campo) {
     if (campo.type === 'autor-search') {
-        window[`setupAuth_${campo.id}`] = configurarAutorSearch(campo);
+        window[`setupAutor_${campo.id}`] = configurarAutorSearch(campo);
     } 
     else if (campo.type === 'artista-search') {
         window[`setupArtist_${campo.id}`] = configurarArtistaSearch(campo);
     }
     else if (campo.type === 'volumes-list') {
         window[`setupVols_${campo.id}`] = configurarListaVolumes(campo);
-        if (!editMode) window[`setupVols_${campo.id}`].adicionar();
+        if (!editMode) window[`setupVols_${campo.id}`].adicionar(); // Esse adicionar é como um metodo/objeto privado de configurarListaVolumes(), criado no return dessa função
     } 
     else if (campo.type === 'faixas-list') {
         window[`setupFaixas_${campo.id}`] = configurarListaFaixas(campo);
-        if (!editMode) window[`setupFaixas_${campo.id}`].adicionar();
+        if (!editMode) window[`setupFaixas_${campo.id}`].adicionar(); // Esse adicionar é como um metodo privado de configurarListaFaixas(), criado no return dessa função
     }
 }
 
-// --- LÓGICA DE BUSCA (AUTOR e ARTISTA) ---
+/*######################################
+    Lógicas de busca (search)
+    e configurações/formatações especificas 
 
-// CORREÇÃO: Aceita uma função (getListaDados) em vez do array direto
+######################################*/
+
 function configurarSearchGenerico(campo, getListaDados) { 
+    // Como essa função é generica, não se preocupa muito com quando dado estamos tratando (isso será feito mais pra frente)
     const inputVisual = document.getElementById(`${campo.id}-visual`);
     const inputOculto = document.getElementById(campo.id);
     const listaUl = document.getElementById(`lista-${campo.id}`);
     const tagsContainer = document.getElementById(`tags-${campo.id}`);
     
+    // Aqui serão armazenados todos os itens (autores, artistas, bandas) que forem selecionados
+    // É importante para separarmos o que foi selecionado e precisa de um tratamente especial do resto, que pode continuar como já está
     let selecionados = [];
 
-    const renderTags = () => {
+    const renderTags = () => { // As "tags" são os itens que, quando selecionado, aparecem como "bolha" em cima do campo
         tagsContainer.innerHTML = '';
         selecionados.forEach((item, index) => {
-            const tag = document.createElement('span');
+            const tag = document.createElement('span'); // preparando cada "bolha" que precisa aparecer (caso o elemento seja selecionado)
             tag.className = "bg-teal-100 text-teal-800 px-3 py-1 rounded-full text-sm flex items-center gap-2";
             tag.innerHTML = `${item.nome} <button type="button" class="text-teal-600 hover:text-red-500 font-bold">×</button>`;
             tag.querySelector('button').onclick = () => {
-                selecionados.splice(index, 1);
-                atualizarInput();
-                renderTags();
+                selecionados.splice(index, 1); // ao clicar no "x", remove o item selecionado do array "selecionados"...
+                atualizarInput(); // ...atualiza a lista...
+                renderTags(); // ... e chama a si mesma para atualizar também as "bolhas" dos itens selecionados
             };
-            tagsContainer.appendChild(tag);
+            tagsContainer.appendChild(tag); // terminando tudo, insere o elemento criado no html
         });
     };
 
@@ -355,6 +407,7 @@ function configurarSearchGenerico(campo, getListaDados) {
         else inputOculto.value = selecionados.length > 0 ? selecionados[0].id : '';
     };
 
+    // Função para "setar" os selecionados
     const setSelecionados = (novosDados) => {
         selecionados = novosDados;
         renderTags();
@@ -365,10 +418,16 @@ function configurarSearchGenerico(campo, getListaDados) {
     }
 
     const filtrar = (texto) => {
+        /* Função que filtra a lista, removendo o que foi selecionado
+
+        Basicamente, aqui é tratado o texto inserido pelo usuario, para comparar se:
+            1 - o que foi digitado existe
+            2 - o que foi digitado está selecionado (dentro de uma "bolha")
+        Com isso, ele formata o que recebemos lá atrás do banco de dados em uma lista selecionavel e responsiva
+        */
         listaUl.innerHTML = '';
         const termo = texto.toLowerCase();
         
-        // CORREÇÃO: Chama a função para obter a lista ATUALIZADA
         const listaAtual = getListaDados(); 
         
         const filtrados = listaAtual.filter(item => 
@@ -402,10 +461,11 @@ function configurarSearchGenerico(campo, getListaDados) {
         listaUl.classList.remove('hidden');
     };
 
-    inputVisual.addEventListener('input', (e) => filtrar(e.target.value));
-    inputVisual.addEventListener('focus', () => filtrar(inputVisual.value));
-    document.addEventListener('click', (e) => {
-        if (inputVisual && !inputVisual.parentElement.contains(e.target)) {
+    // Configurando a forma como o campo deve aparecer ou não
+    inputVisual.addEventListener('input', (e) => filtrar(e.target.value)); // ao receber input, filtre
+    inputVisual.addEventListener('focus', () => filtrar(inputVisual.value)); // ao estar em foco, filtre
+    document.addEventListener('click', (e) => { // ao ser clicado...
+        if (inputVisual && !inputVisual.parentElement.contains(e.target)) { // se for fora do campo, então esconda ele
             listaUl.classList.add('hidden');
         }
     });
@@ -413,18 +473,19 @@ function configurarSearchGenerico(campo, getListaDados) {
     return { setSelecionados };
 }
 
-// CORREÇÃO: Passa uma função anônima que retorna a variável global
+// Função que usa a configurarSearchGenerico, mas especificando como (configurarSearchGenerico pede também uma lista de dados para trabalhar, e aqui estamos especificando qual)
 function configurarAutorSearch(campo) {
     return configurarSearchGenerico(campo, () => listaAutores);
 }
 
-// CORREÇÃO: Passa uma função anônima que retorna a variável global
+// Função que usa a configurarSearchGenerico, mas especificando como (configurarSearchGenerico pede também uma lista de dados para trabalhar, e aqui estamos especificando qual)
 function configurarArtistaSearch(campo) {
     return configurarSearchGenerico(campo, () => listaArtistas);
 }
 
+// Se lembra da nossa "função-global-gambiarra"? Então, é aqui que vai ser usada, nas funções preencherAutoresSearch e preencherArtistasSearch...
 function preencherAutoresSearch(campo, item) {
-    const setup = window[`setupAuth_${campo.id}`];
+    const setup = window[`setupAutor_${campo.id}`];
     if (!setup) return;
     formatarEPreencherSearch(campo, item, setup);
 }
@@ -435,6 +496,7 @@ function preencherArtistasSearch(campo, item) {
     formatarEPreencherSearch(campo, item, setup);
 }
 
+// ... pois fazem parte do setup aqui. Essa é a função que formata/limpa o que foi recebido do banco de dados, trata esses dados, e envia eles para serem usados por setSelecionados
 function formatarEPreencherSearch(campo, item, setup) {
     let dados = item[campo.id];
     let formatados = [];
@@ -447,8 +509,7 @@ function formatarEPreencherSearch(campo, item, setup) {
     setup.setSelecionados(formatados);
 }
 
-// --- LÓGICA DE VOLUMES E FAIXAS ---
-
+// Funções especial para listar/formatar/exibir os varios volumes que uma HQ pode ter
 function configurarListaVolumes(campo) {
     const btnAdd = document.getElementById(`btn-add-${campo.id}`);
     const containerVols = document.getElementById(`container-${campo.id}`);
@@ -481,6 +542,7 @@ function configurarListaVolumes(campo) {
     return { adicionar: adicionarVolume };
 }
 
+// Mais uma vez a função-global-gambiarra retorna, e aqui o metodo/objeto privado também aparece
 function preencherVolumes(id, volumes) {
     const container = document.getElementById(`container-${id}`);
     container.innerHTML = '';
@@ -492,6 +554,7 @@ function preencherVolumes(id, volumes) {
     }
 }
 
+// Essas duas funcionam como as de cima, formatam e exibem uma lista
 function configurarListaFaixas(campo) {
     const btnAdd = document.getElementById(`btn-add-${campo.id}`);
     const containerFaixas = document.getElementById(`container-${campo.id}`);
@@ -536,8 +599,10 @@ function preencherFaixas(id, faixas) {
     }
 }
 
-// --- ENVIO DO FORMULÁRIO ---
-
+/*######################################
+    Logicas dos envios (para o banco de daddos)
+    
+######################################*/
 async function processarEnvio(e, seletor, token) {
     e.preventDefault();
     const schemas = getSchemas();
@@ -545,6 +610,7 @@ async function processarEnvio(e, seletor, token) {
     const formData = new FormData();
 
     for (const campo of config.campos) {
+        // "Para cada campo, recolhe os dados que estão neles"
         const input = document.getElementById(campo.id);
 
         if (campo.type === 'file') {
@@ -559,22 +625,25 @@ async function processarEnvio(e, seletor, token) {
         else {
             let valor = input.value;
             
-            // Validação de Autor/Artista
+            // Validação de Autor/Artista (tem algo nos campos? O que tem lá, é nulo?)
             if ((campo.type === 'autor-search' || campo.type === 'artista-search') && (!valor || valor === '[]' || valor === '')) {
                 alert(`Selecione pelo menos um ${campo.label}!`);
                 return;
             }
 
+            // Filtro no array, passando item por (.map), removendo os nulos (.trim()), removendo os repetidos (filter(s => s))
             if (campo.transform === 'array') {
                 const arr = valor.split(',').map(s => s.trim()).filter(s => s);
-                formData.append(campo.id, JSON.stringify(arr));
+                formData.append(campo.id, JSON.stringify(arr)); // manda o array, formatando ele pro json (JSON.stringify)
             } else {
                 formData.append(campo.id, valor);
             }
         }
     }
 
+    // Configuração dinamica caso estejamos no modo edição (put, update) ou criação (post, create)
     const metodo = editMode ? 'PUT' : 'POST';
+    // Caso estejamos no modo edição, adicionamos o id que queremos editar
     const urlFinal = editMode ? `${VERCEL_URL}${config.endpoint}/${currentId}` : `${VERCEL_URL}${config.endpoint}`;
 
     try {
@@ -604,13 +673,14 @@ async function processarEnvio(e, seletor, token) {
 }
 
 function coletarVolumes(containerId) {
+    // forEach para coletar cada um dos volumes adicionados
     const linhas = document.querySelectorAll(`#container-${containerId} .volume-item`);
     let lista = [];
     linhas.forEach(linha => {
         const titulo = linha.querySelector('.vol-titulo').value;
         const volume = linha.querySelector('.vol-numero').value;
         if (volume) {
-            lista.push({
+            lista.push({ // cria um objeto com as informações, coloca ele no final do array (push)
                 titulo: titulo,
                 tituloAlt: linha.querySelector('.vol-titulo-alt').value,
                 volume: Number(volume),
@@ -622,9 +692,10 @@ function coletarVolumes(containerId) {
 }
 
 function coletarFaixas(containerId) {
+    // forEach para coletar cada um dos volumes adicionados
     const linhas = document.querySelectorAll(`#container-${containerId} .faixa-item`);
     let lista = [];
-    linhas.forEach(linha => {
+    linhas.forEach(linha => { // cria um objeto com as informações, coloca ele no final do array (push)
         const titulo = linha.querySelector('.faixa-titulo').value;
         if (titulo) {
             lista.push({
