@@ -354,7 +354,11 @@ document.addEventListener('DOMContentLoaded', async () => {
 
             if (config.getTituloAlt) {
                 const alt = config.getTituloAlt(item);
-                if (alt) tituloAlt.textContent = alt;
+                if (alt) {
+                    tituloAlt.textContent = alt;
+                } else {
+                    tituloAlt.remove();
+                }
             } else {
                 tituloAlt.remove();
             }
