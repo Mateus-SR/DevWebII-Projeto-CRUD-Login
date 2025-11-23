@@ -64,7 +64,7 @@ router.get('/', async (req, res) => {
             .populate('dvds')
             .populate('hqs')
             .populate('adicionadoPor', 'username')
-            .populate('alteradoPor', 'username');;
+            .populate('alteradoPor', 'username');
             
         res.json(autores);
     } catch (error) {

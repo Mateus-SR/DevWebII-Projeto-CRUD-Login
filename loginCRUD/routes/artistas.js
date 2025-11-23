@@ -60,6 +60,8 @@ router.get('/', async (req, res) => {
         // populate para preencher os campos virtuais
         const autores = await Artista.find()
             .populate('cds')
+            .populate('adicionadoPor', 'username')
+            .populate('alteradoPor', 'username');
             
         res.json(autores);
     } catch (error) {
@@ -73,6 +75,8 @@ router.get('/:id', async (req, res) => {
     try {
         const artista = await Artista.findById(req.params.id)
             .populate('cds')
+            .populate('adicionadoPor', 'username')
+            .populate('alteradoPor', 'username');
             
         if (!artista) return res.status(404).json({ message: 'Artista não encontrado' });
         res.json(artista);
@@ -113,7 +117,7 @@ router.put('/:id', authenticate, upload.single('imagem'), async (req, res) => {
             
             delete dados.adicionadoPor; 
         }
-        
+
         // Atualiza no banco
         // "new: true" avisa para o mongoose que queremos a versão atualizada da entrada no banco
         // "runValidators: true" avisa que queremos seguir as regras estabelecidas la nas models
