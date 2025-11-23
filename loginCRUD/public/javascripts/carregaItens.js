@@ -91,7 +91,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         if (!lista || lista.length === 0) return ''; // Se não tiver lista ou ela estiver vazia, retorna um string vazio
 
         // Criando a base
-        let html = `<div class="mt-2 p-2 bg-teal-800/30 rounded max-h-32 overflow-y-auto text-sm border border-teal-600/30">`;
+        let html = `<div class="mt-2 p-2 bg-teal-800/30 rounded max-h-32 overflow-y-auto text-sm border whitespace-pre-line border-teal-600/30">`;
         html += `<p class="font-bold text-xs uppercase mb-1 opacity-70">${tituloLista}:</p>`;
 
         // Passando em cada item para formatar eles
@@ -102,7 +102,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             } else if (tituloLista === 'Faixas') {
                 texto = `${index + 1}. ${item.titulo} <span class="opacity-60 text-xs">(${item.duracao || '--:--'})</span>`;
             }
-            html += `${texto}`;
+            html += `${texto}\n`;
         });
 
         // Fechando o html
