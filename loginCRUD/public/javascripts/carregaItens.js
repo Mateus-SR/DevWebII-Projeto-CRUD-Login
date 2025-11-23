@@ -214,9 +214,10 @@ document.addEventListener('DOMContentLoaded', async () => {
                 const usuarioAdd = item.adicionadoPor ? item.adicionadoPor.username : 'Desconhecido';
                 const usuarioAlt = item.alteradoPor ? item.alteradoPor.username : 'Desconhecido';
 
-                return `<strong>Diretor:</strong> ${linkDiretor}<br>
-                        <strong>Duração:</strong> ${item.duracao} min<br>
-                        <strong>Ano:</strong> ${item.ano}
+                const linkDiretores = formatarAutorLink(item.autores);
+                return `<strong>Autores, Diretores e/ou Roteiristas:</strong> ${linkDiretores}<br>
+                        <strong>Duração:</strong> ${item.duracao || '--'} min<br>
+                        <strong>Ano:</strong> ${item.ano || 'N/A'}
                         <span class="text-md text-gray-800 block mt-2">
                         Adicionado por: ${usuarioAdd} - Última edição por: ${usuarioAlt}
                          </span>`;

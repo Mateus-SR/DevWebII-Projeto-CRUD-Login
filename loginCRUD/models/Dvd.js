@@ -10,7 +10,7 @@ const dvdSchema = new Schema ({
     ano: { type: Number },
 
     // Configurando aqui também a relação dessa coleção com a outra
-    autor: { type: Schema.Types.ObjectId, ref: 'Autor', required: true },
+    autores: [{ type: Schema.Types.ObjectId, ref: 'Autor', required: true }],
     
     urlFoto: { type: String }, // aqui vai o link do Cloudinary
     ativo: { type: Boolean, default: true }, // como boa pratica, não vou deletar do banco de dados, mas esconder essa entrada

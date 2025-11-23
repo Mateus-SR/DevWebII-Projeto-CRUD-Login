@@ -57,7 +57,7 @@ router.post('/', authenticate, upload.single('imagem'), async (req, res) => {
 // GET (Listar) - Público
 router.get('/', async (req, res) => {
     try {
-        const dvds = await Dvd.find({ ativo: true }).populate('autor')
+        const dvds = await Dvd.find({ ativo: true }).populate('autores')
         .populate('adicionadoPor', 'username')
         .populate('alteradoPor', 'username');;
         res.json(dvds);
@@ -70,7 +70,7 @@ router.get('/', async (req, res) => {
 // (Observação: esse :id é como uma variavel, diz que essa rota (/) vai receber um dado (req.params.id))
 router.get('/:id', async (req, res) => {
     try {
-        const dvd = await Dvd.findById(req.params.id).populate('autor')
+        const dvd = await Dvd.findById(req.params.id).populate('autores')
         .populate('adicionadoPor', 'username')
         .populate('alteradoPor', 'username');;
         if (!dvd) return res.status(404).json({ message: 'Dvd não encontrado' });

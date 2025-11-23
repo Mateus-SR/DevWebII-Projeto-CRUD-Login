@@ -47,7 +47,7 @@ autorSchema.virtual('hqs', {
 autorSchema.virtual('dvds', {
     ref: 'Dvd',
     localField: '_id',
-    foreignField: 'autor'
+    foreignField: 'autores'
 });
 
 autorSchema.virtual('livros', {

@@ -59,7 +59,7 @@ const getSchemas = () => ({
             { id: 'tipo', label: 'Tipo', type: 'text', required: true },
             { id: 'duracao', label: 'Duração (min)', type: 'number' },
             { id: 'ano', label: 'Ano', type: 'number' },
-            { id: 'autor', label: 'Diretor', type: 'autor-search', required: true },
+            { id: 'autores', label: 'Autores, Diretores e/ou Roteiristas', type: 'autor-search', multiple: true, required: true, transform: 'arrayId' },
             { id: 'imagem', label: 'Upload da Capa (opcional)', type: 'file' }
         ]
     },
@@ -96,6 +96,14 @@ document.addEventListener('DOMContentLoaded', async () => {
     const form = document.getElementById('formDinamico');
     const container = document.getElementById('camposContainer');
 
+    seletor.addEventListener('change', (e) => {
+        const schemas = getSchemas();
+        const config = schemas[e.target.value];
+        if (config) {
+            renderizarFormulario(config, container, form);
+        }
+    });
+
     // Carregando dados especiais que precisam estar já carregados (campo autor/artista/banda)
     // Por ser mais de 1 request, usamos o await Promise.all, pois não apenas precisamos pedir pro navegador (que é um tanto impaciente) esperar receber o dado enviado para prosseguirmos, mas também precisamos avisar que virá mais de 1 dado de uma vez (Promise.all). (Curiosidade: o Promisse.all faz todas as requisições de uma vez (em pararelo), e devolve tudo junto, assim que tudo estiver pronto) 
     await Promise.all([carregarAutores(seletor), carregarArtistas()]);
@@ -126,16 +134,12 @@ document.addEventListener('DOMContentLoaded', async () => {
             renderizarFormulario(config, container, form);
             await carregarDadosEdicao(paramTipo, paramId, config);
         }
+    } else if (paramTipo) {
+        // Se tiver apenas o tipo na URL (ex: botão Novo Autor), seleciona e carrega o form
+        seletor.value = paramTipo;
+        // Dispara manualmente o evento para renderizar o formulário
+        seletor.dispatchEvent(new Event('change'));
     }
-
-    // Passando pelo if, renderizamos o formulario na tela
-    seletor.addEventListener('change', (e) => {
-        const schemas = getSchemas();
-        const config = schemas[e.target.value];
-        if (config) {
-            renderizarFormulario(config, container, form);
-        }
-    });
 
     // Configurando o que deve acontecer ao enviar (submit) o formulário
     form.addEventListener('submit', (e) => processarEnvio(e, seletor, token));
