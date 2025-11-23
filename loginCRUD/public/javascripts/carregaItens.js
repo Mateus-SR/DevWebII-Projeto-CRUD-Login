@@ -143,7 +143,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                         <strong>Total:</strong> ${item.volumeTotal || 0} volumes
                         ${listaVolumes}
                         <span class="text-md text-gray-800 block mt-2">
-                        Adicionado por: ${usuarioAdd} - Última edição por: ${usuarioAlt}
+                        Adicionado por: ${usuarioAdd} - Última atualização por: ${usuarioAlt}
                          </span>`;
             },
             getTitulo: (item) => item.nome,
@@ -182,7 +182,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                         <strong>Gênero:</strong> ${generos}<br>
                         <strong>Autores:</strong> ${linksAutores}
                         <span class="text-md text-gray-800 block mt-2">
-                        Adicionado por: ${usuarioAdd} - Última edição por: ${usuarioAlt}
+                        Adicionado por: ${usuarioAdd} - Última atualização por: ${usuarioAlt}
                          </span>`;
             },
             getTitulo: (item) => item.nome
@@ -203,7 +203,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                         <strong>Total de faixas:</strong> ${item.faixasTotal || 0}
                         ${listaFaixas}
                         <span class="text-md text-gray-800 block mt-2">
-                        Adicionado por: ${usuarioAdd} - Última edição por: ${usuarioAlt}
+                        Adicionado por: ${usuarioAdd} - Última atualização por: ${usuarioAlt}
                          </span>`;
             },
             getTitulo: (item) => item.titulo
@@ -221,7 +221,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                         <strong>Duração:</strong> ${item.duracao || '--'} min<br>
                         <strong>Ano:</strong> ${item.ano || 'N/A'}
                         <span class="text-md text-gray-800 block mt-2">
-                        Adicionado por: ${usuarioAdd} - Última edição por: ${usuarioAlt}
+                        Adicionado por: ${usuarioAdd} - Última atualização por: ${usuarioAlt}
                          </span>`;
             },
             getTitulo: (item) => item.nome
@@ -255,7 +255,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                 return `<strong>Nacionalidade:</strong> ${item.nacionalidade || 'N/A'}<br>
                         <strong>Obras:</strong><br> ${listaHtml}
                         <span class="text-md text-gray-800 block mt-2">
-                        Adicionado por: ${usuarioAdd} - Última edição por: ${usuarioAlt}
+                        Adicionado por: ${usuarioAdd} - Última atualização por: ${usuarioAlt}
                          </span>`;
             },
             getTitulo: (item) => item.nome
@@ -288,7 +288,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                 return `<strong>Nacionalidade:</strong> ${item.nacionalidade || 'N/A'}<br>
                         <strong>Obras:</strong><br> ${listaHtml}
                         <span class="text-md text-gray-800 block mt-2">
-                        Adicionado por: ${usuarioAdd} - Última edição por: ${usuarioAlt}
+                        Adicionado por: ${usuarioAdd} - Última atualização por: ${usuarioAlt}
                          </span>`;
             },
             getTitulo: (item) => item.nome
