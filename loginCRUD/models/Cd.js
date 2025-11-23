@@ -5,7 +5,7 @@ const Schema = mongoose.Schema;
 const cdSchema = new Schema ({
     titulo: { type: String, required: true },
     tipo: { type: String, required: true },
-    genero: { type: String },
+    genero: [String],
     faixas: [{ 
         titulo: String,
         duracao: String

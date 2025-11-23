@@ -196,8 +196,10 @@ document.addEventListener('DOMContentLoaded', async () => {
                 const usuarioAdd = item.adicionadoPor ? item.adicionadoPor.username : 'Desconhecido';
                 const usuarioAlt = item.alteradoPor ? item.alteradoPor.username : 'Desconhecido';
 
+                const generos = item.genero && item.genero.length > 0 ? item.genero.join(', ') : 'N/A';
+
                 return `<strong>Artista:</strong> ${linkArtista}<br>
-                        <strong>Ano:</strong> ${item.ano || 'N/A'}<br>
+                        <strong>Gênero:</strong> ${generos}<br> <strong>Ano:</strong> ${item.ano || 'N/A'}<br>
                         <strong>Total de faixas:</strong> ${item.faixasTotal || 0}
                         ${listaFaixas}
                         <span class="text-md text-gray-800 block mt-2">

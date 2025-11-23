@@ -21,21 +21,21 @@ const getSchemas = () => ({
         endpoint: '/hqs',
         campos: [
             { id: 'nome', label: 'Nome da HQ', type: 'text', required: true },
-            { id: 'nomeAlt', label: 'Nomes alternativos', type: 'text', transform: 'array' },
+            { id: 'nomeAlt', label: 'Nomes alternativos (opcional)', type: 'text', transform: 'array' },
             { id: 'tipo', label: 'Tipo', type: 'tipo-hq', required: true },
-            { id: 'genero', label: 'Gêneros', type: 'text', transform: 'array' },
-            { id: 'autores', label: 'Autores', type: 'autor-search', multiple: true, required: true, transform: 'arrayId' },
-            { id: 'volumes', label: 'Lista de Volumes', type: 'volumes-list' },
-            { id: 'imagem', label: 'Upload da Capa', type: 'file' }
+            { id: 'genero', label: 'Gêneros (opcional) (separar por vírgula)', type: 'text', transform: 'array' },
+            { id: 'autores', label: 'Autores (separar por vírgula)', type: 'autor-search', multiple: true, required: true, transform: 'arrayId' },
+            { id: 'volumes', label: 'Lista de Volumes (opcional)', type: 'volumes-list' },
+            { id: 'imagem', label: 'Upload da Capa (opcional)', type: 'file' }
         ]
     },
     'livros': {
         endpoint: '/livros',
         campos: [
             { id: 'nome', label: 'Título', type: 'text', required: true },
-            { id: 'ano', label: 'Ano', type: 'number' },
-            { id: 'genero', label: 'Gêneros', type: 'text', transform: 'array' },
-            { id: 'autores', label: 'Autores', type: 'autor-search', multiple: true, required: true, transform: 'arrayId' },
+            { id: 'ano', label: 'Ano (opcional)', type: 'number' },
+            { id: 'genero', label: 'Gêneros (opcional) (separar por vírgula)', type: 'text', transform: 'array' },
+            { id: 'autores', label: 'Autores (separar por vírgula)', type: 'autor-search', multiple: true, required: true, transform: 'arrayId' },
             { id: 'imagem', label: 'Upload da Capa (opcional)', type: 'file' }
         ]
     },
@@ -44,12 +44,12 @@ const getSchemas = () => ({
         campos: [
             { id: 'titulo', label: 'Título do Álbum', type: 'text', required: true },
             { id: 'tipo', label: 'Tipo', type: 'tipo-cd', required: true },
-            { id: 'genero', label: 'Gênero Musical', type: 'text' },
-            { id: 'ano', label: 'Ano', type: 'number' },
-            { id: 'duracaoTotal', label: 'Duração Total (minutos)', type: 'number' },
+            { id: 'genero', label: 'Gêneros Musicais (opcional) (separar por vírgula)', type: 'text', transform: 'array' },
+            { id: 'ano', label: 'Ano (opcional)', type: 'number' },
+            { id: 'duracaoTotal', label: 'Duração Total (opcional) (minutos)', type: 'number' },
             { id: 'artista', label: 'Artista/Banda', type: 'artista-search', required: true },
-            { id: 'faixas', label: 'Lista de Faixas', type: 'faixas-list' },
-            { id: 'imagem', label: 'Upload da Capa', type: 'file' }
+            { id: 'faixas', label: 'Lista de Faixas (opcional)', type: 'faixas-list' },
+            { id: 'imagem', label: 'Upload da Capa (opcional)', type: 'file' }
         ]
     },
     'dvds': {
@@ -57,9 +57,9 @@ const getSchemas = () => ({
         campos: [
             { id: 'nome', label: 'Nome', type: 'text', required: true },
             { id: 'tipo', label: 'Tipo', type: 'text', required: true },
-            { id: 'duracao', label: 'Duração (min)', type: 'number' },
-            { id: 'ano', label: 'Ano', type: 'number' },
-            { id: 'autores', label: 'Autores, Diretores e/ou Roteiristas', type: 'autor-search', multiple: true, required: true, transform: 'arrayId' },
+            { id: 'duracao', label: 'Duração (opcional) (min)', type: 'number' },
+            { id: 'ano', label: 'Ano (opcional)', type: 'number' },
+            { id: 'autores', label: 'Autores  (separar por vírgula), Diretores e/ou Roteiristas', type: 'autor-search', multiple: true, required: true, transform: 'arrayId' },
             { id: 'imagem', label: 'Upload da Capa (opcional)', type: 'file' }
         ]
     },
@@ -67,7 +67,7 @@ const getSchemas = () => ({
         endpoint: '/autores',
         campos: [
             { id: 'nome', label: 'Nome', type: 'text', required: true },
-            { id: 'nacionalidade', label: 'Nacionalidade', type: 'text' },
+            { id: 'nacionalidade', label: 'Nacionalidade (opcional)', type: 'text' },
             { id: 'imagem', label: 'Upload da Foto (opcional)', type: 'file' }
         ]
     },
@@ -75,7 +75,7 @@ const getSchemas = () => ({
         endpoint: '/artistas',
         campos: [
             { id: 'nome', label: 'Nome da Banda/Artista', type: 'text', required: true },
-            { id: 'nacionalidade', label: 'Nacionalidade', type: 'text' },
+            { id: 'nacionalidade', label: 'Nacionalidade (opcional)', type: 'text' },
             { id: 'imagem', label: 'Upload da Foto (opcional)', type: 'file' }
         ]
     }
