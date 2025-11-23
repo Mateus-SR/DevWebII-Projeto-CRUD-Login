@@ -9,3 +9,5 @@ Além disso, sou um grande adepto da filosofia de que "quem aprende se divertind
 E se ja não fosse o bastante, aproveitei também para explorar o [Cloudinary](https://cloudinary.com/), na parte de upload de imagens e manipulação/compressão delas, e aprendi a usar o [Jekyll](https://docs.github.com/en/pages/setting-up-a-github-pages-site-with-jekyll), pra não precisar repetir o header em todas as páginas *(como isso é útil!)*.
 
 No fim, posso dizer com certeza que aprendi bastante com esse projeto, desde a organização das pastas, uso de vários arquivos javascript para rotas, interação com mongodb e outros serviços através do Node. Por mais que o uso disso tudo aqui possa ser simples, consigo me ver implementando muito do que vi aqui nos próximos projetos da faculdade, nos meus projetos pessoais e sabe se lá onde mais.
+
+***(Observação: por se tratar de um projeto público, e ser mais divertido testar com pessoas que não conhecem o sistema, mandei para alguns amigos meus. Logo, não tenho controle sobre todas as coisas adicionadas aqui. Algumas são minhas, outras, não faço ideia.)***
