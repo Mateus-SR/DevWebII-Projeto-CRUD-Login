@@ -23,8 +23,19 @@ const hqSchema = new Schema ({
     ativo: { type: Boolean, default: true } // como boa pratica, não vou deletar do banco de dados, mas esconder essa entrada
 });
 
-hqSchema.pre('save', function(next) {
-    this.volumeTotal = this.volumes.length;
+// Essa é uma função middleware, que é executada antes ("pre") de algo acontecer (nesse caso, a ação de salvar ("save"))
+hqSchema.pre('save', function(next) { // roda sempre que salva no banco
+    this.volumeTotal = this.volumes.length; // O que acontece aqui:
+    // Contamos quantas faixas existem, e dizemos que esse número é que deve ir para faixasTotal
+    next(); // e prosseguimos pra proxima função
+});
+
+hqSchema.pre('findOneAndUpdate', function(next) { // roda sempre que atualiza no banco
+    const update = this.getUpdate(); // pega o que foi atualizado
+
+    if (update.volumes) { // e se houver alguma atualização no total de volumes, então atualiza ele
+        update.volumeTotal = update.volumes.length;
+    }
     next();
 });
 

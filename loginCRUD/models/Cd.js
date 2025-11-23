@@ -31,4 +31,12 @@ cdSchema.pre('save', function(next) {
     next(); // e prosseguimos pra proxima função
 });
 
+cdSchema.pre('findOneAndUpdate', function(next) { // roda sempre que atualiza no banco
+    const update = this.getUpdate(); // pega o que foi atualizado
+
+    if (update.faixas) { // e se houver alguma atualização no total de faixas, então atualiza ele
+        update.faixasTotal = update.faixas.length;
+    }
+    next();
+});
 module.exports = mongoose.model('Cd', cdSchema);
